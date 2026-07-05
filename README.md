@@ -35,7 +35,7 @@ Le tout est orchestré par un agent **LangGraph** et exposé via une API
 ## Prérequis
 
 - [Docker](https://docs.docker.com/get-docker/) et Docker Compose
-- (Développement local hors Docker) Python 3.12+
+- (Développement local hors Docker) Python 3.12+ et [uv](https://docs.astral.sh/uv/)
 
 ## Démarrage rapide
 
