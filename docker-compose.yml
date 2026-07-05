@@ -1,0 +1,10 @@
+services:
+  backend:
+    build: ./backend
+    container_name: ffe-chess-backend
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      BACKEND_HOST: 0.0.0.0
+      BACKEND_PORT: 8000
+    restart: unless-stopped
