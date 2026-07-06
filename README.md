@@ -68,6 +68,7 @@ http://localhost:8000/docs.
 | `GET` | `/api/v1/evaluate/{fen}` | Évaluation Stockfish de la position (centipions ou mat) |
 | `GET` | `/api/v1/vector-search?query=...` | Passages Wikichess pertinents sur une ouverture (RAG Milvus via LangGraph) |
 | `GET` | `/api/v1/videos/{opening}` | Vidéos YouTube explicatives sur une ouverture (via LangGraph) |
+| `GET` | `/api/v1/analyze/{fen}` | **Analyse complète de l'agent** : agrège coups, éval, contexte et vidéos (LangGraph, choix conditionnel de la source) |
 
 > Le paramètre `{fen}` contient des `/` et des espaces : les espaces doivent être
 > encodés (`%20`). Exemple pour la position de départ :

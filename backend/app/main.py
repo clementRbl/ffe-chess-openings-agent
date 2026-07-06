@@ -7,6 +7,7 @@ Ce fichier crée l'instance FastAPI et enregistre l'ensemble des routes de l'API
 
 from fastapi import FastAPI
 
+from app.api.v1.analyze import router as analyze_router
 from app.api.v1.evaluate import router as evaluate_router
 from app.api.v1.health import router as health_router
 from app.api.v1.moves import router as moves_router
@@ -22,6 +23,7 @@ app.include_router(moves_router, prefix=settings.api_v1_prefix)
 app.include_router(evaluate_router, prefix=settings.api_v1_prefix)
 app.include_router(vector_search_router, prefix=settings.api_v1_prefix)
 app.include_router(videos_router, prefix=settings.api_v1_prefix)
+app.include_router(analyze_router, prefix=settings.api_v1_prefix)
 
 
 @app.get("/")
