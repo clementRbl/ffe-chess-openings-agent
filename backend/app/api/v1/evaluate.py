@@ -1,3 +1,10 @@
+"""Route d'évaluation d'une position par Stockfish.
+
+Expose ``GET /evaluate/{fen}`` : valide la position FEN reçue puis demande au
+moteur Stockfish son évaluation (en centipions ou en nombre de coups avant mat)
+ainsi que le meilleur coup. Utile lorsque la partie sort de la théorie.
+"""
+
 from fastapi import APIRouter, HTTPException
 from starlette.concurrency import run_in_threadpool
 
@@ -10,7 +17,18 @@ router = APIRouter(tags=["evaluate"])
 
 @router.get("/evaluate/{fen:path}", response_model=EvaluationResponse)
 async def evaluate_position(fen: str) -> EvaluationResponse:
-    """Return the Stockfish evaluation of a position (in centipawns or mate)."""
+    """Renvoie l'évaluation Stockfish d'une position (centipions ou mat).
+
+    L'appel au moteur étant bloquant, il est délégué à un thread pour ne pas
+    bloquer la boucle d'événements asynchrone.
+
+    Args:
+        fen: Position au format FEN (les espaces doivent être encodés en ``%20``).
+
+    Raises:
+        HTTPException: 400 si la FEN est invalide, 503 si le moteur est
+            indisponible ou échoue.
+    """
     try:
         parse_fen(fen)
     except InvalidFenError as exc:

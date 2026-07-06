@@ -1,6 +1,10 @@
-"""Preprocess the Wikichess corpus, embed it and load it into Milvus.
+"""Script d'ingestion du corpus Wikichess dans Milvus.
 
-Run inside the backend container:
+Lit les articles d'ouvertures (fichiers markdown), les découpe en passages
+(chunking par paragraphe), les encode en vecteurs avec le modèle d'embedding,
+puis (re)crée la collection Milvus et y insère les passages.
+
+À lancer à l'intérieur du conteneur backend :
     uv run python -m app.scripts.ingest
 """
 
@@ -12,7 +16,17 @@ from app.services.milvus_client import milvus_repository
 
 
 def load_chunks(data_dir: Path) -> list[dict]:
-    """Read markdown articles and split them into paragraph-level chunks."""
+    """Lit les articles markdown et les découpe en passages (paragraphes).
+
+    Le titre de chaque passage est déduit de la première ligne de titre
+    markdown (``# ...``) de l'article, sinon du nom du fichier.
+
+    Args:
+        data_dir: Dossier contenant les fichiers ``.md`` du corpus.
+
+    Returns:
+        Une liste de passages de la forme ``{"title": ..., "text": ...}``.
+    """
     chunks: list[dict] = []
     for path in sorted(data_dir.glob("*.md")):
         content = path.read_text(encoding="utf-8").strip()
@@ -30,6 +44,7 @@ def load_chunks(data_dir: Path) -> list[dict]:
 
 
 def main() -> None:
+    """Charge le corpus, génère les embeddings et remplit la collection Milvus."""
     data_dir = Path(settings.wikichess_data_dir)
     chunks = load_chunks(data_dir)
     print(f"Loaded {len(chunks)} chunks from {data_dir}")

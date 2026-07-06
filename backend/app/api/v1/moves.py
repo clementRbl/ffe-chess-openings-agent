@@ -1,3 +1,10 @@
+"""Route des coups théoriques d'une position.
+
+Expose ``GET /moves/{fen}`` : valide la position FEN reçue puis interroge
+l'explorateur d'ouvertures Lichess pour renvoyer les coups théoriques (issus des
+parties de référence) disponibles depuis cette position.
+"""
+
 from fastapi import APIRouter, HTTPException
 
 from app.schemas.chess import MovesResponse
@@ -9,7 +16,14 @@ router = APIRouter(tags=["moves"])
 
 @router.get("/moves/{fen:path}", response_model=MovesResponse)
 async def get_moves(fen: str) -> MovesResponse:
-    """Return the theoretical moves for a position from the Lichess explorer."""
+    """Renvoie les coups théoriques d'une position via l'explorateur Lichess.
+
+    Args:
+        fen: Position au format FEN (les espaces doivent être encodés en ``%20``).
+
+    Raises:
+        HTTPException: 400 si la FEN est invalide, 502 en cas d'erreur Lichess.
+    """
     try:
         parse_fen(fen)
     except InvalidFenError as exc:

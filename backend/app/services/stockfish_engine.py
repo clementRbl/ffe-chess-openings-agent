@@ -1,3 +1,10 @@
+"""Service d'évaluation par le moteur Stockfish.
+
+Encapsule l'utilisation du moteur Stockfish pour évaluer une position et
+proposer le meilleur coup. Isole la logique du moteur du reste de l'application
+et convertit ses erreurs en une exception métier unique.
+"""
+
 from stockfish import Stockfish
 
 from app.core.config import settings
@@ -5,27 +12,40 @@ from app.schemas.chess import EvaluationResponse
 
 
 class StockfishError(Exception):
-    """Raised when the Stockfish engine is unavailable or fails to evaluate."""
+    """Levée lorsque le moteur Stockfish est indisponible ou échoue à évaluer."""
 
 
 class StockfishService:
-    """Wrapper around the Stockfish engine for position evaluation."""
+    """Enveloppe autour du moteur Stockfish pour l'évaluation de positions."""
 
     def __init__(
         self,
         path: str | None = None,
         depth: int | None = None,
     ) -> None:
+        """Initialise le service.
+
+        Args:
+            path: Chemin de l'exécutable Stockfish (par défaut celui de la config).
+            depth: Profondeur de recherche (par défaut celle de la config).
+        """
         self._path = path or settings.stockfish_path
         self._depth = depth or settings.stockfish_depth
 
     def evaluate(self, fen: str) -> EvaluationResponse:
-        """Evaluate a position with Stockfish.
+        """Évalue une position avec Stockfish.
 
-        The position is assumed to be a valid FEN (validated upstream).
+        La position est supposée être une FEN valide (validée en amont).
+
+        Args:
+            fen: Position au format FEN.
+
+        Returns:
+            L'évaluation (centipions ou mat) et le meilleur coup.
 
         Raises:
-            StockfishError: if the engine binary is missing or evaluation fails.
+            StockfishError: si l'exécutable est introuvable ou si l'évaluation
+                échoue.
         """
         try:
             engine = Stockfish(
@@ -41,7 +61,8 @@ class StockfishService:
             best_move = engine.get_best_move()
         except (FileNotFoundError, OSError) as exc:
             raise StockfishError(f"Stockfish engine unavailable: {exc}") from exc
-        except Exception as exc:  # noqa: BLE001 - surface engine errors uniformly
+        except Exception as exc:
+            # On uniformise toute erreur du moteur en une exception métier.
             raise StockfishError(f"Stockfish evaluation failed: {exc}") from exc
 
         return EvaluationResponse(

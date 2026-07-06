@@ -1,3 +1,10 @@
+"""Client de l'explorateur d'ouvertures Lichess.
+
+Encapsule les appels HTTP à l'explorateur d'ouvertures Lichess (parties de
+maîtres / références) et transforme la réponse en modèles de l'application. Gère
+les délais d'attente, les erreurs réseau et l'authentification par token.
+"""
+
 import httpx
 
 from app.core.config import settings
@@ -5,11 +12,11 @@ from app.schemas.chess import MovesResponse, TheoreticalMove
 
 
 class LichessError(Exception):
-    """Raised when the Lichess opening explorer cannot be reached or fails."""
+    """Levée lorsque l'explorateur Lichess est injoignable ou renvoie une erreur."""
 
 
 class LichessService:
-    """Client for the Lichess opening explorer (reference/master games)."""
+    """Client de l'explorateur d'ouvertures Lichess (parties de référence)."""
 
     def __init__(
         self,
@@ -17,21 +24,36 @@ class LichessService:
         timeout: float | None = None,
         token: str | None = None,
     ) -> None:
+        """Initialise le client.
+
+        Args:
+            base_url: URL de l'explorateur (par défaut celle de la configuration).
+            timeout: Délai d'attente en secondes (par défaut celui de la config).
+            token: Token personnel Lichess (par défaut celui de la config).
+        """
         self._base_url = base_url or settings.lichess_explorer_url
         self._timeout = timeout or settings.lichess_timeout_seconds
         self._token = token if token is not None else settings.lichess_token
 
     def _headers(self) -> dict[str, str]:
+        """Construit les en-têtes HTTP, avec le token d'authentification si présent."""
         headers = {"User-Agent": "ffe-chess-openings-agent"}
         if self._token:
             headers["Authorization"] = f"Bearer {self._token}"
         return headers
 
     async def get_theoretical_moves(self, fen: str) -> MovesResponse:
-        """Return the theoretical moves known for a position from Lichess.
+        """Renvoie les coups théoriques connus pour une position via Lichess.
+
+        Args:
+            fen: Position au format FEN.
+
+        Returns:
+            Les coups théoriques et, le cas échéant, le nom de l'ouverture.
 
         Raises:
-            LichessError: on timeout, network error or unexpected response.
+            LichessError: en cas de délai dépassé, d'erreur réseau, d'absence
+                d'authentification (401) ou de réponse inattendue.
         """
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:
@@ -56,6 +78,7 @@ class LichessService:
 
     @staticmethod
     def _parse(fen: str, data: dict) -> MovesResponse:
+        """Transforme la réponse JSON de Lichess en modèle ``MovesResponse``."""
         moves = [
             TheoreticalMove(
                 uci=move["uci"],
@@ -63,7 +86,9 @@ class LichessService:
                 white=move.get("white", 0),
                 draws=move.get("draws", 0),
                 black=move.get("black", 0),
-                total=move.get("white", 0) + move.get("draws", 0) + move.get("black", 0),
+                total=move.get("white", 0)
+                + move.get("draws", 0)
+                + move.get("black", 0),
             )
             for move in data.get("moves", [])
         ]

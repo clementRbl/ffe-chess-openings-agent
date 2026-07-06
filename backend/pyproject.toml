@@ -17,3 +17,15 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.20",
+]
