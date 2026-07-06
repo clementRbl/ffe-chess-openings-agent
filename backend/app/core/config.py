@@ -24,5 +24,22 @@ class Settings(BaseSettings):
     stockfish_threads: int = 1
     stockfish_hash_mb: int = 64
 
+    # Milvus vector database.
+    milvus_host: str = "localhost"
+    milvus_port: int = 19530
+    milvus_collection: str = "wikichess_openings"
+
+    # Embeddings (sentence-transformers).
+    embedding_model: str = "Qwen/Qwen3-Embedding-0.6B"
+    embedding_dim: int = 1024
+    vector_search_top_k: int = 3
+
+    # Corpus location (inside the container).
+    wikichess_data_dir: str = "data/wikichess"
+
+    @property
+    def milvus_uri(self) -> str:
+        return f"http://{self.milvus_host}:{self.milvus_port}"
+
 
 settings = Settings()

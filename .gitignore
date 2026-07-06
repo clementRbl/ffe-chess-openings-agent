@@ -19,9 +19,8 @@ node_modules/
 frontend/dist/
 frontend/.angular/
 
-# Docker volumes / data
+# Docker volumes (named volumes are managed by Docker, not stored in-repo)
 volumes/
-data/
 
 # IDE / OS
 .idea/

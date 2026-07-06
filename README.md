@@ -66,11 +66,34 @@ http://localhost:8000/docs.
 | `GET` | `/api/v1/healthcheck` | Sonde de disponibilité du service |
 | `GET` | `/api/v1/moves/{fen}` | Coups théoriques pour une position (Lichess opening explorer) |
 | `GET` | `/api/v1/evaluate/{fen}` | Évaluation Stockfish de la position (centipions ou mat) |
+| `GET` | `/api/v1/vector-search?query=...` | Passages Wikichess pertinents sur une ouverture (RAG Milvus via LangGraph) |
 
 > Le paramètre `{fen}` contient des `/` et des espaces : les espaces doivent être
 > encodés (`%20`). Exemple pour la position de départ :
 > `/api/v1/evaluate/rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR%20w%20KQkq%20-%200%201`.
 > Une position FEN invalide renvoie une erreur `400`.
+
+## Base vectorielle (RAG Wikichess → Milvus)
+
+Un petit corpus d'articles d'ouvertures (en français, dossier
+[backend/data/wikichess/](backend/data/wikichess/)) est découpé en passages,
+encodé avec le modèle d'embedding **Qwen3-Embedding-0.6B**
+(`sentence-transformers`) puis indexé dans **Milvus**. La recherche est
+orchestrée par un workflow **LangGraph** (encodage de la requête → recherche
+vectorielle).
+
+Après le premier démarrage, chargez les données dans Milvus (le modèle
+d'embedding, ~1,2 Go, est téléchargé au premier lancement) :
+
+```bash
+docker compose exec backend uv run python -m app.scripts.ingest
+```
+
+Puis interrogez la base :
+
+```bash
+curl "http://localhost:8000/api/v1/vector-search?query=defense%20sicilienne&top_k=2"
+```
 
 ## Configuration
 
@@ -91,7 +114,7 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 
 - [x] **Étape 1** – Structure du projet, dépôt Git, `docker-compose` (healthcheck FastAPI)
 - [x] **Étape 2** – Endpoints Lichess (coups théoriques) + Stockfish (évaluation)
-- [ ] **Étape 3** – RAG Wikichess → Milvus (recherche vectorielle)
+- [x] **Étape 3** – RAG Wikichess → Milvus (recherche vectorielle) orchestré par LangGraph
 - [ ] **Étape 4** – Recherche de vidéos YouTube
 - [ ] **Étape 5** – Interface Angular (ngx-chessboard)
 - [ ] **Étape 6** – Containerisation complète + démonstration
