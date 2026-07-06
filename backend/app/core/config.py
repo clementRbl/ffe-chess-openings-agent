@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     # Emplacement du corpus (à l'intérieur du conteneur).
     wikichess_data_dir: str = "data/wikichess"
 
+    # API YouTube Data v3 (recherche de vidéos explicatives).
+    youtube_api_key: str = ""
+    youtube_max_results: int = 5
+    youtube_search_keywords: str = "chess opening tutorial explanation"
+
     @property
     def milvus_uri(self) -> str:
         """URI de connexion à Milvus construite à partir de l'hôte et du port."""

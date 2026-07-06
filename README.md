@@ -67,6 +67,7 @@ http://localhost:8000/docs.
 | `GET` | `/api/v1/moves/{fen}` | Coups théoriques pour une position (Lichess opening explorer) |
 | `GET` | `/api/v1/evaluate/{fen}` | Évaluation Stockfish de la position (centipions ou mat) |
 | `GET` | `/api/v1/vector-search?query=...` | Passages Wikichess pertinents sur une ouverture (RAG Milvus via LangGraph) |
+| `GET` | `/api/v1/videos/{opening}` | Vidéos YouTube explicatives sur une ouverture (via LangGraph) |
 
 > Le paramètre `{fen}` contient des `/` et des espaces : les espaces doivent être
 > encodés (`%20`). Exemple pour la position de départ :
@@ -102,20 +103,25 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 
 | Variable        | Description                                              | Défaut |
 |-----------------|---------------------------------------------------------|--------|
-| `BACKEND_PORT`  | Port exposé par l'API FastAPI                            | `8000` |
-| `LICHESS_TOKEN` | Token personnel Lichess pour l'opening explorer (requis pour `/moves`) | *(vide)* |
+| `BACKEND_PORT`    | Port exposé par l'API FastAPI                          | `8000` |
+| `LICHESS_TOKEN`   | Token personnel Lichess pour l'opening explorer (requis pour `/moves`) | *(vide)* |
+| `YOUTUBE_API_KEY` | Clé API YouTube Data v3 (requise pour `/videos`)       | *(vide)* |
 
 > **Token Lichess :** l'opening explorer requiert désormais une authentification.
 > Générez un token gratuit (sans scope) sur
 > https://lichess.org/account/oauth/token et renseignez `LICHESS_TOKEN` dans
 > `.env`. Sans token, `/api/v1/moves/{fen}` renvoie une erreur `502` explicite.
+>
+> **Clé YouTube :** créez une clé API dans la console Google Cloud (activez
+> « YouTube Data API v3 ») et renseignez `YOUTUBE_API_KEY` dans `.env`. Sans
+> clé, `/api/v1/videos/{opening}` renvoie une erreur `503` explicite.
 
 ## Avancement (étapes de la mission)
 
 - [x] **Étape 1** – Structure du projet, dépôt Git, `docker-compose` (healthcheck FastAPI)
 - [x] **Étape 2** – Endpoints Lichess (coups théoriques) + Stockfish (évaluation)
 - [x] **Étape 3** – RAG Wikichess → Milvus (recherche vectorielle) orchestré par LangGraph
-- [ ] **Étape 4** – Recherche de vidéos YouTube
+- [x] **Étape 4** – Recherche de vidéos YouTube (API Data v3) orchestrée par LangGraph
 - [ ] **Étape 5** – Interface Angular (ngx-chessboard)
 - [ ] **Étape 6** – Containerisation complète + démonstration
 - [ ] **Étape 7** – Note système d'analyse vidéo (MCP) : bénéfices, limites, faisabilité

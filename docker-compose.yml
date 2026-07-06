@@ -8,6 +8,7 @@ services:
       BACKEND_HOST: 0.0.0.0
       BACKEND_PORT: 8000
       LICHESS_TOKEN: ${LICHESS_TOKEN:-}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
       MILVUS_HOST: milvus
       MILVUS_PORT: 19530
       HF_HOME: /cache/huggingface
