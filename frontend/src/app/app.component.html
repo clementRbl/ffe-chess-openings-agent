@@ -1,0 +1,138 @@
+<header class="app-header">
+  <h1>Agent IA — Ouvertures d'échecs</h1>
+  <p class="subtitle">Fédération Française des Échecs · Assistant d'apprentissage</p>
+</header>
+
+<main class="layout">
+  <!-- Colonne gauche : échiquier interactif -->
+  <section class="board-panel">
+    <ngx-chess-board
+      #board
+      [size]="480"
+      (moveChange)="onMove($event)"
+    ></ngx-chess-board>
+
+    <div class="board-actions">
+      <button type="button" (click)="reset()">Réinitialiser</button>
+    </div>
+
+    <p class="fen">
+      <span class="label">FEN</span>
+      <code>{{ currentFen }}</code>
+    </p>
+  </section>
+
+  <!-- Colonne droite : recommandations de l'agent -->
+  <section class="agent-panel">
+    <h2>Recommandations de l'agent</h2>
+
+    @if (loading) {
+      <p class="status loading">Analyse de la position en cours…</p>
+    }
+
+    @if (error) {
+      <p class="status error">{{ error }}</p>
+    }
+
+    @if (analysis && !loading) {
+      <div class="summary">
+        <span
+          class="badge"
+          [class.in-theory]="analysis.in_theory"
+          [class.out-theory]="!analysis.in_theory"
+        >
+          {{ analysis.in_theory ? 'Dans la théorie' : 'Hors théorie' }}
+        </span>
+        @if (analysis.opening) {
+          <span class="opening">{{ analysis.opening }}</span>
+        }
+        <p>{{ analysis.summary }}</p>
+      </div>
+
+      <!-- Évaluation moteur (Stockfish) -->
+      <div class="card">
+        <h3>Évaluation (Stockfish)</h3>
+        @if (analysis.evaluation) {
+          <p class="eval">
+            <strong>{{ evaluationText }}</strong>
+            @if (analysis.evaluation.best_move) {
+              <span class="best">meilleur coup : {{ analysis.evaluation.best_move }}</span>
+            }
+          </p>
+        } @else {
+          <p class="muted">Indisponible.</p>
+        }
+      </div>
+
+      <!-- Coups théoriques (Lichess) -->
+      <div class="card">
+        <h3>Coups théoriques (Lichess)</h3>
+        @if (analysis.theoretical_moves.length) {
+          <ul class="moves">
+            @for (move of analysis.theoretical_moves.slice(0, 6); track move.uci) {
+              <li>
+                <span class="san">{{ move.san }}</span>
+                <span class="stats">{{ move.total }} parties</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="muted">Aucun coup théorique pour cette position.</p>
+        }
+      </div>
+
+      <!-- Contexte de l'ouverture (RAG Milvus / Wikichess) -->
+      @if (analysis.context.length) {
+        <div class="card">
+          <h3>Contexte de l'ouverture</h3>
+          @for (chunk of analysis.context; track $index) {
+            <p class="chunk">
+              @if (chunk.title) {
+                <span class="chunk-title">{{ chunk.title }}</span>
+              }
+              {{ chunk.text }}
+            </p>
+          }
+        </div>
+      }
+
+      <!-- Vidéos explicatives (YouTube) -->
+      @if (analysis.videos.length) {
+        <div class="card">
+          <h3>Vidéos explicatives</h3>
+          <div class="video-embed">
+            <iframe
+              [src]="embedUrl(analysis.videos[0].embed_url)"
+              title="Vidéo explicative"
+              frameborder="0"
+              allowfullscreen
+            ></iframe>
+          </div>
+          <ul class="videos">
+            @for (video of analysis.videos; track video.video_id) {
+              <li>
+                <a [href]="video.url" target="_blank" rel="noopener">
+                  {{ video.title }}
+                </a>
+                <span class="channel">{{ video.channel }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- État des sources consultées par l'agent -->
+      <div class="sources">
+        @for (source of analysis.sources | keyvalue; track source.key) {
+          <span
+            class="source"
+            [class.ko]="!source.value.ok"
+            [title]="source.value.detail ?? ''"
+          >
+            {{ source.key }}: {{ source.value.ok ? 'ok' : 'indisponible' }}
+          </span>
+        }
+      </div>
+    }
+  </section>
+</main>

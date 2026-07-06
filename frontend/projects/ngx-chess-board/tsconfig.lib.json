@@ -1,0 +1,32 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../out-tsc/lib",
+    "declarationMap": true,
+    "declaration": true,
+    "inlineSources": true,
+    "types": [],
+    "strict": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitOverride": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    "lib": [
+      "dom",
+      "es2018"
+    ]
+  },
+  "angularCompilerOptions": {
+    "skipTemplateCodegen": true,
+    "strictMetadataEmit": true,
+    "fullTemplateTypeCheck": true,
+    "strictInjectionParameters": true,
+    "strictTemplates": false,
+    "strictInputAccessModifiers": false,
+    "enableResourceInlining": true
+  },
+  "exclude": [
+    "src/test.ts",
+    "**/*.spec.ts"
+  ]
+}

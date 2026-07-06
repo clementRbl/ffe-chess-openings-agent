@@ -68,7 +68,7 @@ http://localhost:8000/docs.
 | `GET` | `/api/v1/evaluate/{fen}` | Évaluation Stockfish de la position (centipions ou mat) |
 | `GET` | `/api/v1/vector-search?query=...` | Passages Wikichess pertinents sur une ouverture (RAG Milvus via LangGraph) |
 | `GET` | `/api/v1/videos/{opening}` | Vidéos YouTube explicatives sur une ouverture (via LangGraph) |
-| `GET` | `/api/v1/analyze/{fen}` | **Analyse complète de l'agent** : agrège coups, éval, contexte et vidéos (LangGraph, choix conditionnel de la source) |
+| `GET` | `/api/v1/analyze?fen=...` | **Analyse complète de l'agent** : agrège coups, éval, contexte et vidéos (LangGraph, choix conditionnel de la source) |
 
 > Le paramètre `{fen}` contient des `/` et des espaces : les espaces doivent être
 > encodés (`%20`). Exemple pour la position de départ :
@@ -105,6 +105,7 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 | Variable        | Description                                              | Défaut |
 |-----------------|---------------------------------------------------------|--------|
 | `BACKEND_PORT`    | Port exposé par l'API FastAPI                          | `8000` |
+| `FRONTEND_PORT`   | Port exposé par l'interface Angular (nginx)            | `4200` |
 | `LICHESS_TOKEN`   | Token personnel Lichess pour l'opening explorer (requis pour `/moves`) | *(vide)* |
 | `YOUTUBE_API_KEY` | Clé API YouTube Data v3 (requise pour `/videos`)       | *(vide)* |
 
@@ -123,6 +124,6 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 - [x] **Étape 2** – Endpoints Lichess (coups théoriques) + Stockfish (évaluation)
 - [x] **Étape 3** – RAG Wikichess → Milvus (recherche vectorielle) orchestré par LangGraph
 - [x] **Étape 4** – Recherche de vidéos YouTube (API Data v3) orchestrée par LangGraph
-- [ ] **Étape 5** – Interface Angular (ngx-chessboard)
+- [x] **Étape 5** – Interface Angular (ngx-chess-board) + agent d'orchestration (`/analyze`)
 - [ ] **Étape 6** – Containerisation complète + démonstration
 - [ ] **Étape 7** – Note système d'analyse vidéo (MCP) : bénéfices, limites, faisabilité
