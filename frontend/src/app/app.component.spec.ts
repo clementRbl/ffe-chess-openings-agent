@@ -138,6 +138,18 @@ describe('AppComponent — lisibilité des recommandations', () => {
     expect(component.evaluationHint).toBe('');
   });
 
+  it('lit le trait dans la FEN', () => {
+    component.currentFen =
+      'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    expect(component.whiteToMove).toBeTrue();
+    expect(component.turnLabel).toBe('Aux Blancs de jouer');
+
+    component.currentFen =
+      'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1';
+    expect(component.whiteToMove).toBeFalse();
+    expect(component.turnLabel).toBe('Aux Noirs de jouer');
+  });
+
   it('place le curseur de la barre au centre à l’équilibre', () => {
     withEvaluation('cp', 0);
     expect(component.evaluationShare).toBe(50);

@@ -112,9 +112,41 @@
     overflow: hidden;
   }
 
+  // Trait en cours : la pastille reprend la couleur du camp qui doit jouer.
+  .turn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    margin: 0.9rem 0 0;
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    background: var(--paper-sunken);
+    color: var(--ink-soft);
+    font-size: 0.86rem;
+    font-weight: 500;
+
+    .dot {
+      width: 0.85rem;
+      height: 0.85rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: var(--shadow-sm);
+      transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+    }
+
+    &.black .dot {
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+  }
+
   .reset {
     width: 100%;
-    margin-top: 0.9rem;
+    margin-top: 0.6rem;
     padding: 0.6rem 1rem;
     border: 1px solid var(--rule-strong);
     border-radius: var(--radius);

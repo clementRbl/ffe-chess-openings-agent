@@ -6,6 +6,8 @@ mots-clés), transforme la réponse en modèles de l'application et gère l'abse
 de clé ainsi que les erreurs de quota.
 """
 
+import html
+
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
@@ -84,7 +86,12 @@ class YouTubeService:
 
     @staticmethod
     def _parse(response: dict) -> list[VideoResult]:
-        """Transforme la réponse de l'API YouTube en liste de ``VideoResult``."""
+        """Transforme la réponse de l'API YouTube en liste de ``VideoResult``.
+
+        Les titres renvoyés par l'API contiennent des entités HTML (``&#39;``
+        pour une apostrophe, par exemple) : on les décode, sinon elles
+        s'afficheraient telles quelles dans l'interface.
+        """
         videos: list[VideoResult] = []
         for item in response.get("items", []):
             video_id = item.get("id", {}).get("videoId")
@@ -95,8 +102,8 @@ class YouTubeService:
             videos.append(
                 VideoResult(
                     video_id=video_id,
-                    title=snippet.get("title", ""),
-                    channel=snippet.get("channelTitle", ""),
+                    title=html.unescape(snippet.get("title", "")),
+                    channel=html.unescape(snippet.get("channelTitle", "")),
                     url=f"https://www.youtube.com/watch?v={video_id}",
                     embed_url=f"https://www.youtube.com/embed/{video_id}",
                     thumbnail=thumbnail,

@@ -33,6 +33,13 @@
         (moveChange)="onMove($event)"
       ></ngx-chess-board>
 
+      <!-- Trait en cours : lu directement dans la FEN, annoncé aux lecteurs
+           d'écran à chaque changement. -->
+      <p class="turn" [class.black]="!whiteToMove" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span>
+        {{ turnLabel }}
+      </p>
+
       <button type="button" class="reset" (click)="reset()">
         Réinitialiser la partie
       </button>

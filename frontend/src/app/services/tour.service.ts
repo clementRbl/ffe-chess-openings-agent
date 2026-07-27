@@ -18,7 +18,8 @@ export class TourService {
         title: 'Ton échiquier',
         description:
           "Joue un coup en déplaçant une pièce. À chaque coup, l'assistant analyse " +
-          'la nouvelle position et met à jour ses conseils, à droite.',
+          'la nouvelle position et met à jour ses conseils, à droite. La pastille ' +
+          'sous le plateau rappelle à qui est le tour de jouer.',
       },
     },
     {

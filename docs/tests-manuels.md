@@ -245,13 +245,15 @@ Jouer **1.e4** en glissant le pion, puis **1…c5** pour les Noirs.
 
 **Attendu à chaque coup :**
 
-1. la mention « Analyse de la position en cours… » apparaît brièvement ;
-2. après 1…c5, le panneau affiche l'ouverture **Sicilian Defense**, une **barre
+1. la pastille sous l'échiquier bascule : rond blanc et « Aux Blancs de jouer »,
+   puis rond noir et « Aux Noirs de jouer » ;
+2. la mention « Analyse de la position en cours… » apparaît brièvement ;
+3. après 1…c5, le panneau affiche l'ouverture **Sicilian Defense**, une **barre
    d'évaluation** penchant très légèrement du côté des Blancs avec sa traduction
    en clair (« La position est équilibrée. »), les coups joués par les maîtres
    avec leur nombre de parties, des explications sur l'ouverture et la carte
    « Vidéos sur Sicilian Defense » ;
-3. déplier « Détails techniques » : la FEN affichée correspond à la position.
+4. déplier « Détails techniques » : la FEN affichée correspond à la position.
 
 ### 4.3 Test 14 — Les infobulles expliquent le vocabulaire
 

@@ -73,6 +73,26 @@ def test_youtube_response_is_mapped_and_incomplete_items_are_ignored():
     assert videos[0].embed_url == "https://www.youtube.com/embed/abc123"
 
 
+def test_youtube_titles_have_their_html_entities_decoded():
+    """Les entités HTML de l'API ne doivent pas s'afficher telles quelles."""
+    payload = {
+        "items": [
+            {
+                "id": {"videoId": "abc123"},
+                "snippet": {
+                    "title": "Beating King&#39;s Pawn &amp; winning",
+                    "channelTitle": "Chess &amp; Co",
+                },
+            }
+        ]
+    }
+
+    videos = YouTubeService._parse(payload)
+
+    assert videos[0].title == "Beating King's Pawn & winning"
+    assert videos[0].channel == "Chess & Co"
+
+
 def test_wikichess_articles_are_chunked_by_paragraph(tmp_path):
     """Le corpus est découpé en passages, le titre venant de l'en-tête markdown."""
     from app.scripts.ingest import load_chunks

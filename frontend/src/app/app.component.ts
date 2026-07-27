@@ -71,6 +71,21 @@ export class AppComponent implements AfterViewInit {
     this.runAnalysis(this.board.getFEN());
   }
 
+  /**
+   * Vrai si c'est aux Blancs de jouer.
+   *
+   * L'information est déjà portée par le second champ de la FEN (« w » ou
+   * « b ») : inutile d'interroger l'agent pour l'afficher.
+   */
+  get whiteToMove(): boolean {
+    return this.currentFen.split(' ')[1] !== 'b';
+  }
+
+  /** Libellé du trait, affiché sous l'échiquier. */
+  get turnLabel(): string {
+    return this.whiteToMove ? 'Aux Blancs de jouer' : 'Aux Noirs de jouer';
+  }
+
   /** URL d'intégration de la vidéo active (référence stable). */
   get videoUrl(): SafeResourceUrl | null {
     return this.activeVideoUrl;
