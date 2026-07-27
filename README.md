@@ -165,6 +165,14 @@ expliqué plutôt qu'affiché brut.
 - **Titres en langage courant**, la source restant indiquée discrètement :
   « Qui est mieux ? » (moteur Stockfish), « Ce que jouent les maîtres » (base
   Lichess), « Comprendre cette ouverture » (fiches Wikichess).
+- **Coups conseillés tracés sur l'échiquier** : les trois coups les plus joués
+  et, s'il en diffère, celui du moteur, en pointillé animé du départ vers
+  l'arrivée. Les pastilles numérotées reprennent le rang de la liste ; survoler
+  un coup isole sa flèche.
+- **Une seule fiche par carte de contexte** : les extraits proviennent tous de
+  la même fiche, dont le nom est affiché. La recherche vectorielle rapprochait
+  auparavant des ouvertures voisines et pouvait servir un passage sur la
+  Caro-Kann à un joueur de la sicilienne (voir `app/graph/retrieval.py`).
 - **Vidéos en vignettes** : rien n'est chargé tant que l'utilisateur n'a pas
   cliqué. Cela évite une lecture imposée et ménage le quota YouTube.
 - **Détails techniques repliés** : la notation FEN de la position (avec son

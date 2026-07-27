@@ -258,11 +258,18 @@
             Comprendre cette ouverture
             <span class="source-tag">fiches Wikichess</span>
           </h3>
+
+          <!-- Tous les passages proviennent d'une même fiche : la nommer une
+               fois en tête vaut mieux que la répéter avant chaque paragraphe,
+               et dit au lecteur ce qu'il est en train de lire. -->
+          @if (contextSource) {
+            <p class="chunk-source">
+              Extraits de la fiche <strong>{{ contextSource }}</strong>
+            </p>
+          }
+
           @for (chunk of analysis.context; track $index) {
             <div class="chunk">
-              @if (chunk.title) {
-                <span class="chunk-title">{{ chunk.title }}</span>
-              }
               <p>{{ chunk.text }}</p>
             </div>
           }

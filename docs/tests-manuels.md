@@ -357,7 +357,37 @@ Relancer la visite guidée depuis le bouton de l'en-tête.
 et une autre la carte d'évaluation. Les étapes visant une carte absente de
 l'écran (contexte, vidéos) sont passées sans erreur.
 
-### 4.7 Test 18 — Les vidéos ne se chargent qu'à la demande
+### 4.7 Test 18 — Les extraits portent tous sur la même ouverture
+
+Jouer 1.e4 c5 et lire la carte « Comprendre cette ouverture ».
+
+**Attendu :** une ligne annonce « Extraits de la fiche **Défense sicilienne** »,
+puis deux paragraphes, tous deux sur la sicilienne. **Aucun paragraphe ne porte
+sur une autre ouverture.**
+
+Rejouer depuis le départ 1.e4 e6 (française), puis 1.e4 c6 (Caro-Kann), puis
+l'italienne (1.e4 e5 2.Cf3 Cc6 3.Fc4).
+
+**Attendu :** à chaque fois, la fiche annoncée correspond à l'ouverture jouée et
+tous les extraits en proviennent. Le nombre d'extraits varie de un à trois selon
+ce que la fiche contient — c'est normal, la carte ne complète pas avec du
+remplissage.
+
+> **Pourquoi ce test.** La recherche documentaire classe les passages par
+> proximité et en renvoyait toujours trois, même quand le troisième portait sur
+> une ouverture voisine : sur la sicilienne, un extrait sur la Caro-Kann
+> s'affichait sans avertissement. L'agent ne retient plus que les passages
+> d'une seule fiche.
+
+Jouer enfin 1.e4 d5 (défense scandinave), qui n'est pas couverte par le corpus.
+
+**Attendu :** la carte annonce une fiche portant un autre nom que l'ouverture
+jouée. Ce n'est pas une erreur : le corpus ne contient que sept fiches, et le
+bandeau nomme toujours l'ouverture réellement jouée. L'important est que la
+provenance soit affichée, pour que le lecteur ne prenne pas ces extraits pour
+une explication de son ouverture.
+
+### 4.8 Test 19 — Les vidéos ne se chargent qu'à la demande
 
 **Attendu avant tout clic :** le titre de la carte reprend le nom de l'ouverture
 (« Vidéos sur Sicilian Defense ») et précise que ces vidéos portent sur
@@ -370,7 +400,7 @@ Cliquer sur une vignette.
 **Attendu :** le lecteur apparaît au-dessus de la liste et la vidéo se lit dans
 la page. Le bouton « Fermer la vidéo » la retire.
 
-### 4.8 Test 19 — La vidéo ne redémarre pas toute seule
+### 4.9 Test 20 — La vidéo ne redémarre pas toute seule
 
 Lancer une vidéo, la laisser tourner quelques secondes, puis **cliquer plusieurs
 fois n'importe où dans la page** (sur un titre, dans le vide, sur une infobulle).
@@ -383,7 +413,7 @@ Jouer ensuite un coup sur l'échiquier.
 lecture continue sans coupure ; sinon le lecteur se ferme et la nouvelle liste
 de vignettes s'affiche.
 
-### 4.9 Test 20 — Position hors théorie depuis l'interface
+### 4.10 Test 21 — Position hors théorie depuis l'interface
 
 Cliquer sur « Réinitialiser la partie », puis jouer **1.f3 e5 2.g4**.
 
@@ -393,7 +423,7 @@ signalée hors théorie, l'évaluation annonce « Mat en 1 » et le coup suggér
 disparaissent, et la carte des coups de maîtres invite à s'appuyer sur le
 moteur.
 
-### 4.10 Test 21 — Les appels passent bien par le proxy
+### 4.11 Test 22 — Les appels passent bien par le proxy
 
 ```bash
 curl http://localhost:4200/api/v1/healthcheck
@@ -407,7 +437,7 @@ problème de CORS.
 
 ## 5. Tests du cache et de l'historique (MongoDB)
 
-### 5.1 Test 22 — Les analyses sont historisées
+### 5.1 Test 23 — Les analyses sont historisées
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet \
@@ -418,7 +448,7 @@ docker compose exec mongo mongosh ffe_chess --quiet \
 `in_theory`, `theoretical_moves`, `evaluation`, `summary` et `created_at`. Les
 positions jouées au § 4 doivent y figurer.
 
-### 5.2 Test 23 — Les appels externes sont mis en cache
+### 5.2 Test 24 — Les appels externes sont mis en cache
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet --eval "db.api_cache.countDocuments()"
@@ -434,7 +464,7 @@ appel n'a été consommé sur le quota YouTube.
 > délai vient de Stockfish et du calcul d'embedding, qui ne sont pas mis en
 > cache. Le cache protège les quotas, pas la latence.
 
-### 5.3 Test 24 — L'expiration automatique est configurée
+### 5.3 Test 25 — L'expiration automatique est configurée
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet \
@@ -448,7 +478,7 @@ C'est lui qui fait purger par MongoDB les entrées de plus de 24 heures.
 
 ## 6. Test de persistance
 
-### Test 25 — Les données survivent à la recréation des conteneurs
+### Test 26 — Les données survivent à la recréation des conteneurs
 
 ```bash
 # 1. Relever les compteurs
@@ -482,7 +512,7 @@ docker volume ls | grep echecs
 
 ## 7. Tests automatisés
 
-### Test 26 — Suite de tests du backend
+### Test 27 — Suite de tests du backend
 
 ```bash
 cd backend && uv run pytest
@@ -493,7 +523,7 @@ cd backend && uv run pytest
 validation FEN, l'aiguillage du graphe, la dégradation gracieuse, le cache et le
 contrat HTTP.
 
-### Test 27 — Suite de tests du frontend
+### Test 28 — Suite de tests du frontend
 
 ```bash
 cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
@@ -503,7 +533,7 @@ cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
 demande, stabilité de l'URL d'intégration, fermeture) et la mise en forme de
 l'évaluation du moteur.
 
-### Test 28 — Qualité du code
+### Test 29 — Qualité du code
 
 ```bash
 cd backend && uv run ruff check . && uv run ruff format --check app tests
@@ -519,7 +549,7 @@ Ces tests vérifient la promesse centrale de l'architecture : **la panne d'une
 source ne doit jamais interrompre l'analyse**. Ils se lisent dans le champ
 `sources` de la réponse.
 
-### 8.1 Test 29 — Panne de MongoDB
+### 8.1 Test 30 — Panne de MongoDB
 
 ```bash
 docker compose stop mongo
@@ -533,7 +563,7 @@ vidéos), et seul `sources.mongo` passe à `"ok": false` avec un message
 d'explication. Le cache et l'historique sont perdus le temps de la panne, rien
 d'autre.
 
-### 8.2 Test 30 — Panne de Milvus
+### 8.2 Test 31 — Panne de Milvus
 
 ```bash
 docker compose stop milvus
@@ -548,7 +578,7 @@ les coups théoriques, l'évaluation et les vidéos sont bien là.
 > Après redémarrage, laisser à Milvus jusqu'à 90 secondes pour redevenir
 > `healthy` avant de rejouer un test.
 
-### 8.3 Test 31 — Clés d'API absentes
+### 8.3 Test 32 — Clés d'API absentes
 
 Plutôt que de modifier `.env`, lancer un backend jetable sans clés sur le port
 8001 — la démonstration reste ainsi utilisable pendant le test :
@@ -650,20 +680,21 @@ docker compose logs -f backend      # en continu
 | 15 | Flèches des coups conseillés | ☐ |
 | 16 | Lecture de la barre d'évaluation | ☐ |
 | 17 | Infobulles du vocabulaire | ☐ |
-| 18 | Vidéos chargées à la demande | ☐ |
-| 19 | La vidéo ne redémarre pas seule | ☐ |
-| 20 | Position hors théorie depuis l'interface | ☐ |
-| 21 | Proxy nginx | ☐ |
-| 22 | Historique des analyses | ☐ |
-| 23 | Mise en cache des appels externes | ☐ |
-| 24 | Expiration automatique du cache | ☐ |
-| 25 | Persistance des volumes | ☐ |
-| 26 | Tests automatisés du backend | ☐ |
-| 27 | Tests automatisés du frontend | ☐ |
-| 28 | Qualité du code | ☐ |
-| 29 | Panne de MongoDB | ☐ |
-| 30 | Panne de Milvus | ☐ |
-| 31 | Clés d'API absentes | ☐ |
+| 18 | Extraits d'une seule fiche | ☐ |
+| 19 | Vidéos chargées à la demande | ☐ |
+| 20 | La vidéo ne redémarre pas seule | ☐ |
+| 21 | Position hors théorie depuis l'interface | ☐ |
+| 22 | Proxy nginx | ☐ |
+| 23 | Historique des analyses | ☐ |
+| 24 | Mise en cache des appels externes | ☐ |
+| 25 | Expiration automatique du cache | ☐ |
+| 26 | Persistance des volumes | ☐ |
+| 27 | Tests automatisés du backend | ☐ |
+| 28 | Tests automatisés du frontend | ☐ |
+| 29 | Qualité du code | ☐ |
+| 30 | Panne de MongoDB | ☐ |
+| 31 | Panne de Milvus | ☐ |
+| 32 | Clés d'API absentes | ☐ |
 
 Pour arrêter le système en conservant les données :
 

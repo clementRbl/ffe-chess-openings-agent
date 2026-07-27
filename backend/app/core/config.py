@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     embedding_model: str = "Qwen/Qwen3-Embedding-0.6B"
     embedding_dim: int = 1024
     vector_search_top_k: int = 3
+    # L'agent interroge le corpus plus largement que ce qu'il affiche, puis ne
+    # garde que les passages d'une même fiche (voir app/graph/retrieval.py). Ce
+    # vivier doit rester supérieur au nombre affiché, sans quoi le filtrage
+    # laisserait une carte presque vide.
+    vector_search_pool: int = 8
 
     # Emplacement du corpus (à l'intérieur du conteneur).
     wikichess_data_dir: str = "data/wikichess"

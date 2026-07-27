@@ -309,6 +309,17 @@ export class AppComponent implements AfterViewInit {
     return `Position gagnante pour ${leader}.`;
   }
 
+  /**
+   * Fiche dont proviennent les passages affichés.
+   *
+   * L'agent ne sert que des passages d'une même fiche ; la nommer permet au
+   * lecteur de savoir sur quelle ouverture porte ce qu'il lit, y compris quand
+   * la sienne n'est pas couverte par le corpus.
+   */
+  get contextSource(): string | null {
+    return this.analysis?.context[0]?.title ?? null;
+  }
+
   /** Nombre de parties de référence, formaté pour la lecture. */
   formatGames(total: number): string {
     return total.toLocaleString('fr-FR');

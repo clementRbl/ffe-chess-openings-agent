@@ -734,21 +734,23 @@
 
 // --- Contexte de l'ouverture ----------------------------------------------
 
+// Provenance des extraits, annoncée une seule fois en tête de carte.
+.chunk-source {
+  margin: -0.4rem 0 1rem;
+  color: var(--ink-muted);
+  font-size: 0.79rem;
+
+  strong {
+    color: var(--clay);
+    font-weight: 600;
+  }
+}
+
 .chunk {
   margin-bottom: 1.1rem;
 
   &:last-child {
     margin-bottom: 0;
-  }
-
-  .chunk-title {
-    display: block;
-    margin-bottom: 0.3rem;
-    color: var(--clay);
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
   }
 
   p {

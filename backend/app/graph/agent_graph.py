@@ -25,6 +25,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.core.config import settings
 from app.graph.cache import cache_get, cache_set
+from app.graph.retrieval import keep_best_source
 from app.schemas.agent import SourceStatus
 from app.schemas.chess import MovesResponse
 from app.schemas.video import VideoResult
@@ -99,14 +100,20 @@ async def _evaluate(state: AgentState) -> AgentState:
 
 
 async def _context(state: AgentState) -> AgentState:
-    """Nœud : récupère le contexte textuel de l'ouverture (Milvus)."""
+    """Nœud : récupère le contexte textuel de l'ouverture (Milvus).
+
+    La recherche ratisse plus large que ce qui sera affiché, puis les passages
+    sont ramenés à une seule fiche : sans cela, la carte mélangeait deux
+    ouvertures (cf. ``keep_best_source``).
+    """
     query = state.get("opening") or "chess opening"
     try:
         vector = await run_in_threadpool(embedding_service.embed_query, query)
         results = await run_in_threadpool(
-            milvus_repository.search, vector, settings.vector_search_top_k
+            milvus_repository.search, vector, settings.vector_search_pool
         )
-        return {"context": results, "sources": {"milvus": SourceStatus()}}
+        passages = keep_best_source(results, settings.vector_search_top_k)
+        return {"context": passages, "sources": {"milvus": SourceStatus()}}
     except MilvusError as exc:
         return {
             "context": [],

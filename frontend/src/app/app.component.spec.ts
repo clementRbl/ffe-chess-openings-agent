@@ -279,6 +279,26 @@ describe('AppComponent — lisibilité des recommandations', () => {
     expect(component.evaluationLeader).toBe('black');
   });
 
+  // La carte de contexte ne sert que des extraits d'une même fiche : elle doit
+  // dire laquelle, pour que le lecteur sache sur quelle ouverture il lit.
+  it('nomme la fiche dont proviennent les extraits', () => {
+    withEvaluation('cp', 0);
+    component.analysis!.context = [
+      { title: 'Défense sicilienne', text: 'Premier extrait.', score: 0.58 },
+      { title: 'Défense sicilienne', text: 'Second extrait.', score: 0.52 },
+    ];
+
+    expect(component.contextSource).toBe('Défense sicilienne');
+  });
+
+  it('n’annonce aucune fiche en l’absence d’extrait', () => {
+    withEvaluation('cp', 0);
+    expect(component.contextSource).toBeNull();
+
+    component.analysis = null;
+    expect(component.contextSource).toBeNull();
+  });
+
   it('affiche un tiret quand l’évaluation est indisponible', () => {
     component.analysis = null;
     expect(component.evaluationText).toBe('—');
