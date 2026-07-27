@@ -45,20 +45,27 @@ class FakeMongoRepository:
 
 
 class FakeLichessService:
-    """Doublure de l'explorateur Lichess comptant le nombre d'appels réseau."""
+    """Doublure de l'explorateur Lichess comptant le nombre d'appels réseau.
 
-    def __init__(self, opening: str | None = "Sicilian Defense") -> None:
+    ``opening`` et ``has_moves`` sont indépendants : Lichess renvoie bien des
+    coups sans nommer d'ouverture sur la position de départ, où aucun coup n'a
+    encore été joué.
+    """
+
+    def __init__(
+        self, opening: str | None = "Sicilian Defense", has_moves: bool = True
+    ) -> None:
         self.opening = opening
+        self.has_moves = has_moves
         self.calls = 0
 
     async def get_theoretical_moves(self, fen: str) -> MovesResponse:
         self.calls += 1
-        moves = [
-            TheoreticalMove(uci="e2e4", san="e4", white=10, draws=5, black=5, total=20)
-        ]
-        return MovesResponse(
-            fen=fen, opening=self.opening, moves=moves if self.opening else []
+        move = TheoreticalMove(
+            uci="e2e4", san="e4", white=10, draws=5, black=5, total=20
         )
+        moves = [move] if self.has_moves else []
+        return MovesResponse(fen=fen, opening=self.opening, moves=moves)
 
 
 class FakeYouTubeService:

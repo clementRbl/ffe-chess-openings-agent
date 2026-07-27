@@ -20,9 +20,28 @@ async def test_known_opening_is_enriched_with_context_and_videos(agent_env):
     assert "Sicilian Defense" in state["summary"]
 
 
+async def test_position_in_theory_without_opening_name_is_not_enriched(agent_env):
+    """Des coups théoriques sans nom d'ouverture ne déclenchent pas l'enrichissement.
+
+    C'est le cas de la position de départ : Lichess renvoie les coups les plus
+    joués mais aucune ouverture, puisqu'aucun coup n'a encore été joué. Sans nom
+    à rechercher, interroger Milvus et YouTube n'aurait pas de sens.
+    """
+    agent_env["lichess"].opening = None
+
+    state = await agent_graph.ainvoke({"fen": START_FEN, "sources": {}})
+
+    assert state["in_theory"] is True
+    assert "context" not in state
+    assert agent_env["youtube"].calls == 0
+    assert "milvus" not in state["sources"]
+    assert state["sources"]["lichess"].ok
+
+
 async def test_unknown_position_falls_back_to_the_engine(agent_env):
     """Hors théorie, l'agent s'appuie sur Stockfish et n'appelle pas YouTube."""
     agent_env["lichess"].opening = None
+    agent_env["lichess"].has_moves = False
 
     state = await agent_graph.ainvoke({"fen": START_FEN, "sources": {}})
 

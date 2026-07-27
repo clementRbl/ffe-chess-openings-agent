@@ -111,13 +111,26 @@ curl http://localhost:8000/api/v1/healthcheck
 curl -I http://localhost:4200
 # -> HTTP/1.1 200 OK
 
-# 3. L'agent agrège bien ses sources sur la position de départ
-curl "http://localhost:8000/api/v1/analyze?fen=rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR%20w%20KQkq%20-%200%201"
+# 3. Les appels /api de l'interface atteignent bien le backend (proxy nginx)
+curl http://localhost:4200/api/v1/healthcheck
+# -> {"status":"ok"}
+
+# 4. L'agent agrège ses sources sur une ouverture reconnue (ici la sicilienne)
+curl -G "http://localhost:8000/api/v1/analyze" \
+  --data-urlencode "fen=rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
 ```
 
-Le champ `sources` de la réponse indique l'état de chacune des cinq sources
-(`lichess`, `stockfish`, `milvus`, `youtube`, `mongo`) : c'est le moyen le plus
-rapide de repérer une clé d'API manquante ou un service non démarré.
+Le champ `sources` de la réponse indique l'état de chaque source **effectivement
+consultée** (`lichess`, `stockfish`, `milvus`, `youtube`, `mongo`) : c'est le
+moyen le plus rapide de repérer une clé d'API manquante ou un service non
+démarré.
+
+> Sur une position dont Lichess ne nomme pas l'ouverture — la position de départ,
+> par exemple, où aucun coup n'a encore été joué — l'agent va directement au
+> résumé fondé sur le moteur : `milvus` et `youtube` sont alors absents de
+> `sources`, puisqu'il n'y a pas de nom d'ouverture à rechercher. C'est le
+> comportement attendu de l'aiguillage du graphe. Utilisez donc une position
+> nommée (§ Positions de démonstration) pour vérifier les cinq sources.
 
 ### Persistance des données
 
