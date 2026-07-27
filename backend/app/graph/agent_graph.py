@@ -160,7 +160,10 @@ def _summarize(state: AgentState) -> AgentState:
             if opening
             else "Position connue de la théorie."
         )
-        summary = f"{intro} Coups principaux recommandés : {top_moves}."
+        # L'espace précédant le deux-points est insécable, comme le veut la
+        # typographie française : sans cela le navigateur renvoie parfois le
+        # signe seul en début de ligne.
+        summary = f"{intro} Coups principaux recommandés : {top_moves}."
     else:
         evaluation = state.get("evaluation")
         best_move = evaluation.best_move if evaluation else None
@@ -169,8 +172,8 @@ def _summarize(state: AgentState) -> AgentState:
             # d'arrivée) : on l'écrit explicitement plutôt que de laisser
             # « g1f3 » brut au lecteur.
             summary = (
-                "Position hors théorie : suivez l'évaluation du moteur. "
-                f"Coup suggéré : {best_move[:2]} vers {best_move[2:4]}."
+                "Position hors théorie : suivez l'évaluation du moteur. "
+                f"Coup suggéré : {best_move[:2]} vers {best_move[2:4]}."
             )
         else:
             summary = "Position hors théorie."

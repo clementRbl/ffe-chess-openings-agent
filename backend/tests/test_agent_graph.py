@@ -38,7 +38,7 @@ async def test_position_in_theory_without_opening_name_is_not_enriched(agent_env
     assert state["sources"]["lichess"].ok
     # Le résumé ne doit pas laisser apparaître un nom d'ouverture vide.
     assert state["summary"] == (
-        "Position connue de la théorie. Coups principaux recommandés : e4."
+        "Position connue de la théorie. Coups principaux recommandés : e4."
     )
 
 
