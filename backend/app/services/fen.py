@@ -25,6 +25,14 @@ def parse_fen(fen: str) -> chess.Board:
         InvalidFenError: si la FEN est malformée ou décrit une position illégale.
     """
     try:
-        return chess.Board(fen)
+        board = chess.Board(fen)
     except ValueError as exc:
         raise InvalidFenError(str(exc)) from exc
+
+    # ``chess.Board`` ne contrôle que la syntaxe : une position sans roi, par
+    # exemple, est acceptée. On vérifie donc aussi sa légalité avant de la
+    # transmettre à Lichess ou à Stockfish.
+    if not board.is_valid():
+        raise InvalidFenError(f"illegal position: {board.status()!r}")
+
+    return board
