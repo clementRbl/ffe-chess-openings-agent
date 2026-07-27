@@ -1,0 +1,527 @@
+# Procédure de test manuel de bout en bout
+
+POC agent IA — apprentissage des ouvertures aux échecs (FFE)
+
+Ce document permet de vérifier, sans connaissance préalable du code, que
+l'ensemble du système fonctionne. Il se déroule en une trentaine de minutes
+(hors premier téléchargement des images) et couvre les six services, les six
+routes de l'API, l'interface, la persistance des données et le comportement du
+système en panne.
+
+**Convention :** chaque test indique la commande à lancer et le **résultat
+attendu**. Un résultat différent est un échec — les causes fréquentes sont
+regroupées au § 9.
+
+---
+
+## 1. Prérequis
+
+| Élément | Vérification | Attendu |
+|---------|--------------|---------|
+| Docker | `docker --version` | version 24 ou supérieure |
+| Docker Compose v2 | `docker compose version` | version 2.x |
+| Espace disque | `df -h .` | au moins 8 Go libres |
+| Ports libres | `ss -tlnp \| grep -E ':(4200\|8000\|19530\|9091)'` | aucune ligne |
+
+Deux clés sont nécessaires pour tester **toutes** les sources. Sans elles, le
+système fonctionne mais deux tests seront en échec attendu (§ 8.3).
+
+| Clé | Où l'obtenir | Variable |
+|-----|--------------|----------|
+| Token Lichess (gratuit, sans scope) | https://lichess.org/account/oauth/token | `LICHESS_TOKEN` |
+| Clé YouTube Data v3 | Console Google Cloud, API « YouTube Data API v3 » activée | `YOUTUBE_API_KEY` |
+
+---
+
+## 2. Démarrage
+
+### 2.1 Configuration
+
+```bash
+cp .env.example .env
+```
+
+Éditer `.env` et renseigner `LICHESS_TOKEN` et `YOUTUBE_API_KEY`.
+
+### 2.2 Lancement
+
+```bash
+docker compose up --build -d
+```
+
+> Premier lancement : compter une dizaine de minutes (construction des images,
+> téléchargement de MongoDB, Milvus, etcd et MinIO).
+
+### 2.3 Test 1 — Tous les services sont sains
+
+```bash
+docker compose ps
+```
+
+**Attendu :** six services, tous `Up`. Cinq portent la mention `(healthy)` ;
+`frontend` (nginx) n'a pas de sonde et affiche seulement `Up`.
+
+```
+backend    Up X minutes (healthy)
+etcd       Up X minutes (healthy)
+frontend   Up X minutes
+milvus     Up X minutes (healthy)
+minio      Up X minutes (healthy)
+mongo      Up X minutes (healthy)
+```
+
+> Milvus met jusqu'à 90 secondes à devenir `healthy` : c'est normal, attendre
+> avant de conclure à un échec.
+
+### 2.4 Test 2 — Chargement du corpus dans Milvus
+
+**Obligatoire au premier démarrage.** Sans cette étape, la recherche vectorielle
+ne renvoie rien.
+
+```bash
+docker compose exec backend uv run python -m app.scripts.ingest
+```
+
+**Attendu :** deux lignes, la seconde confirmant l'insertion.
+
+```
+Loaded 34 chunks from data/wikichess
+Inserted 34 chunks into 'wikichess_openings'
+```
+
+> Le modèle d'embedding (~1,2 Go) est téléchargé au premier lancement : cette
+> commande peut prendre plusieurs minutes. Elle est à relancer uniquement si le
+> volume `milvus_data` est supprimé.
+
+---
+
+## 3. Tests de l'API
+
+### 3.1 Test 3 — Disponibilité du backend
+
+```bash
+curl http://localhost:8000/api/v1/healthcheck
+```
+
+**Attendu :** `{"status":"ok"}`
+
+### 3.2 Test 4 — Documentation interactive
+
+Ouvrir http://localhost:8000/docs dans un navigateur.
+
+**Attendu :** l'interface Swagger liste les six routes (`healthcheck`, `moves`,
+`evaluate`, `vector-search`, `videos`, `analyze`).
+
+### 3.3 Test 5 — Coups théoriques (Lichess)
+
+```bash
+curl "http://localhost:8000/api/v1/moves/rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR%20w%20KQkq%20-%200%202"
+```
+
+**Attendu :** `"opening":"Sicilian Defense"` et une liste de coups commençant par
+`Nf3`, `Nc3`, `c3`, chacun avec son nombre de parties de référence.
+
+> Les espaces de la FEN doivent être encodés en `%20` dans l'URL.
+
+### 3.4 Test 6 — Évaluation moteur (Stockfish)
+
+```bash
+curl "http://localhost:8000/api/v1/evaluate/rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR%20w%20KQkq%20-%200%201"
+```
+
+**Attendu :** `"type":"cp"`, une `value` faible et positive (entre 20 et 40 : la
+position de départ est très légèrement favorable aux Blancs) et un `best_move`
+de quatre caractères comme `d2d4` ou `e2e4`.
+
+### 3.5 Test 7 — Recherche vectorielle (Milvus + Wikichess)
+
+```bash
+curl "http://localhost:8000/api/v1/vector-search?query=defense%20sicilienne&top_k=2"
+```
+
+**Attendu :** deux passages, le premier de titre `Défense sicilienne` avec un
+score autour de 0,58. Les scores sont des similarités cosinus : plus haut =
+plus proche.
+
+### 3.6 Test 8 — Vidéos explicatives (YouTube)
+
+```bash
+curl "http://localhost:8000/api/v1/videos/partie%20italienne"
+```
+
+**Attendu :** cinq vidéos, chacune avec `title`, `channel`, `url` (lien de
+visionnage) et `embed_url` (lien d'intégration utilisé par l'interface).
+
+### 3.7 Test 9 — Analyse complète, position dans la théorie
+
+C'est le test central : il exerce les cinq sources en une seule requête.
+
+```bash
+curl -G "http://localhost:8000/api/v1/analyze" \
+  --data-urlencode "fen=r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3"
+```
+
+**Attendu :**
+
+| Champ | Valeur attendue |
+|-------|-----------------|
+| `opening` | `Italian Game` |
+| `in_theory` | `true` |
+| `theoretical_moves` | commence par `Bc5`, `Nf6`, `Be7` |
+| `evaluation` | type `cp`, valeur proche de 0 |
+| `context` | 3 passages Wikichess |
+| `videos` | 5 vidéos |
+| `sources` | les **cinq** sources (`lichess`, `stockfish`, `milvus`, `youtube`, `mongo`) à `"ok": true` |
+| `summary` | `Position dans la théorie (Italian Game). Coups principaux recommandés : …` |
+
+### 3.8 Test 10 — Analyse d'une position hors théorie
+
+```bash
+curl -G "http://localhost:8000/api/v1/analyze" \
+  --data-urlencode "fen=rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2"
+```
+
+Cette position résulte de 1.f3 e5 2.g4, deux coups qui affaiblissent gravement
+le roi blanc.
+
+**Attendu :**
+
+- `in_theory` vaut `false` et `theoretical_moves` est vide ;
+- `evaluation` indique `"type":"mate"`, `"value":1` et `"best_move":"d8h4"` —
+  le moteur annonce le mat en un coup par Dh4# ;
+- `sources` ne contient que **trois** entrées (`lichess`, `stockfish`, `mongo`) ;
+- `summary` commence par `Position hors théorie : suivez l'évaluation du moteur.`
+
+> **Ce n'est pas un bug.** Sans nom d'ouverture, il n'y a rien à chercher dans
+> Milvus ni sur YouTube : l'agent saute ces deux étapes. C'est l'aiguillage
+> conditionnel du graphe. Le même phénomène se produit sur la position de départ,
+> pour laquelle Lichess ne renvoie aucun nom d'ouverture puisqu'aucun coup n'a
+> encore été joué.
+
+### 3.9 Test 11 — Rejet des positions invalides
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:8000/api/v1/evaluate/pas-une-position"
+curl -s -o /dev/null -w "%{http_code}\n" -G "http://localhost:8000/api/v1/analyze" --data-urlencode "fen=8/8/8/8/8/8/8/8 w - - 0 1"
+curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:8000/api/v1/vector-search"
+```
+
+**Attendu :** `400`, `400`, `422`.
+
+Le deuxième cas est un échiquier vide : syntaxiquement correct, mais illégal
+(aucun roi). Il doit être refusé avant tout appel à Lichess ou Stockfish.
+
+---
+
+## 4. Tests de l'interface
+
+### 4.1 Test 12 — L'interface est servie
+
+Ouvrir http://localhost:4200.
+
+**Attendu :** le titre « Agent IA — Ouvertures d'échecs », un échiquier en
+position de départ à gauche, le panneau « Recommandations de l'agent » à droite.
+L'analyse de la position initiale se déclenche automatiquement.
+
+### 4.2 Test 13 — Synchronisation de la position
+
+Jouer **1.e4** en glissant le pion, puis **1…c5** pour les Noirs.
+
+**Attendu à chaque coup :**
+
+1. la mention « Analyse de la position en cours… » apparaît brièvement ;
+2. la FEN affichée sous l'échiquier change et correspond à la position ;
+3. après 1…c5, le panneau affiche l'ouverture **Sicilian Defense**, les coups
+   théoriques recommandés, l'évaluation du moteur, un ou plusieurs passages
+   d'explication et des vidéos.
+
+### 4.3 Test 14 — Lecture d'une vidéo
+
+Cliquer sur une vidéo du panneau.
+
+**Attendu :** la vidéo se lit directement dans la page (lecteur intégré), sans
+quitter l'application.
+
+### 4.4 Test 15 — Position hors théorie depuis l'interface
+
+Réinitialiser l'échiquier, puis jouer **1.f3 e5 2.g4**.
+
+**Attendu :** le panneau bascule sur le discours moteur — la position est
+signalée hors théorie et Stockfish annonce le mat par Dh4#. Aucun contexte ni
+vidéo n'est proposé.
+
+### 4.5 Test 16 — Bouton de réinitialisation
+
+Cliquer sur « Réinitialiser ».
+
+**Attendu :** l'échiquier revient en position de départ, la FEN affichée
+redevient celle de départ et une nouvelle analyse est lancée.
+
+### 4.6 Test 17 — Les appels passent bien par le proxy
+
+```bash
+curl http://localhost:4200/api/v1/healthcheck
+```
+
+**Attendu :** `{"status":"ok"}`. C'est nginx qui relaie vers le backend ; ce test
+vérifie le chemin exact qu'emprunte l'application Angular, et donc l'absence de
+problème de CORS.
+
+---
+
+## 5. Tests du cache et de l'historique (MongoDB)
+
+### 5.1 Test 18 — Les analyses sont historisées
+
+```bash
+docker compose exec mongo mongosh ffe_chess --quiet \
+  --eval "db.analyses.find().sort({created_at:-1}).limit(3)"
+```
+
+**Attendu :** les trois dernières analyses, chacune avec `fen`, `opening`,
+`in_theory`, `theoretical_moves`, `evaluation`, `summary` et `created_at`. Les
+positions jouées au § 4 doivent y figurer.
+
+### 5.2 Test 19 — Les appels externes sont mis en cache
+
+```bash
+docker compose exec mongo mongosh ffe_chess --quiet --eval "db.api_cache.countDocuments()"
+```
+
+Noter le nombre, rejouer **exactement la même position** qu'au test 9, puis
+recompter.
+
+**Attendu :** le nombre **n'augmente pas**. La réponse vient du cache, aucun
+appel n'a été consommé sur le quota YouTube.
+
+> Le temps de réponse, lui, ne change pas de façon spectaculaire : l'essentiel du
+> délai vient de Stockfish et du calcul d'embedding, qui ne sont pas mis en
+> cache. Le cache protège les quotas, pas la latence.
+
+### 5.3 Test 20 — L'expiration automatique est configurée
+
+```bash
+docker compose exec mongo mongosh ffe_chess --quiet \
+  --eval "db.api_cache.getIndexes()"
+```
+
+**Attendu :** trois index, dont `expires_at_1` portant `expireAfterSeconds: 0`.
+C'est lui qui fait purger par MongoDB les entrées de plus de 24 heures.
+
+---
+
+## 6. Test de persistance
+
+### Test 21 — Les données survivent à la recréation des conteneurs
+
+```bash
+# 1. Relever les compteurs
+docker compose exec mongo mongosh ffe_chess --quiet --eval "db.analyses.countDocuments()"
+docker compose exec mongo mongosh ffe_chess --quiet --eval "db.api_cache.countDocuments()"
+
+# 2. Détruire puis recréer les conteneurs (SANS -v, qui supprimerait les volumes)
+docker compose down
+docker compose up -d
+
+# 3. Attendre que les services soient sains, puis recompter
+docker compose ps
+docker compose exec mongo mongosh ffe_chess --quiet --eval "db.analyses.countDocuments()"
+docker compose exec mongo mongosh ffe_chess --quiet --eval "db.api_cache.countDocuments()"
+
+# 4. Vérifier que l'index Milvus est intact (sans réingestion)
+curl "http://localhost:8000/api/v1/vector-search?query=sicilienne&top_k=1"
+```
+
+**Attendu :** les compteurs sont **identiques** avant et après, et la recherche
+vectorielle répond toujours sans avoir relancé l'ingestion.
+
+```bash
+docker volume ls | grep echecs
+```
+
+**Attendu :** cinq volumes — `mongo_data`, `milvus_data`, `etcd_data`,
+`minio_data`, `hf_cache`.
+
+---
+
+## 7. Tests automatisés
+
+### Test 22 — Suite de tests du backend
+
+```bash
+cd backend && uv run pytest
+```
+
+**Attendu :** 29 tests passent. Ils s'exécutent sans réseau ni service externe
+(toutes les dépendances sont remplacées par des doublures) et couvrent la
+validation FEN, l'aiguillage du graphe, la dégradation gracieuse, le cache et le
+contrat HTTP.
+
+### Test 23 — Qualité du code
+
+```bash
+cd backend && uv run ruff check . && uv run ruff format --check app tests
+```
+
+**Attendu :** `All checks passed!` puis `38 files already formatted`.
+
+---
+
+## 8. Tests de résistance aux pannes
+
+Ces tests vérifient la promesse centrale de l'architecture : **la panne d'une
+source ne doit jamais interrompre l'analyse**. Ils se lisent dans le champ
+`sources` de la réponse.
+
+### 8.1 Test 24 — Panne de MongoDB
+
+```bash
+docker compose stop mongo
+curl -G "http://localhost:8000/api/v1/analyze" \
+  --data-urlencode "fen=rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+docker compose start mongo
+```
+
+**Attendu :** l'analyse aboutit normalement (coups, évaluation, contexte,
+vidéos), et seul `sources.mongo` passe à `"ok": false` avec un message
+d'explication. Le cache et l'historique sont perdus le temps de la panne, rien
+d'autre.
+
+### 8.2 Test 25 — Panne de Milvus
+
+```bash
+docker compose stop milvus
+curl -G "http://localhost:8000/api/v1/analyze" \
+  --data-urlencode "fen=rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+docker compose start milvus
+```
+
+**Attendu :** `context` est vide et `sources.milvus` passe à `"ok": false`, mais
+les coups théoriques, l'évaluation et les vidéos sont bien là.
+
+> Après redémarrage, laisser à Milvus jusqu'à 90 secondes pour redevenir
+> `healthy` avant de rejouer un test.
+
+### 8.3 Test 26 — Clés d'API absentes
+
+Plutôt que de modifier `.env`, lancer un backend jetable sans clés sur le port
+8001 — la démonstration reste ainsi utilisable pendant le test :
+
+```bash
+docker compose run --rm -d --name ffe-test-nokeys \
+  -e LICHESS_TOKEN= -e YOUTUBE_API_KEY= -p 8001:8000 backend
+```
+
+**Attendu :** des erreurs **explicites**, jamais silencieuses.
+
+```bash
+curl "http://localhost:8001/api/v1/moves/rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR%20w%20KQkq%20-%200%202"
+curl "http://localhost:8001/api/v1/videos/sicilienne"
+```
+
+| Appel | Code | Message |
+|-------|------|---------|
+| `/api/v1/moves/{fen}` | 502 | l'explorateur Lichess exige une authentification, avec l'adresse où générer un token |
+| `/api/v1/videos/{opening}` | 503 | `YOUTUBE_API_KEY` n'est pas configurée |
+
+Pour `/analyze`, le résultat dépend de ce que contient déjà le cache — et c'est
+le meilleur moment pour constater son utilité.
+
+**Sur une position déjà analysée** (par exemple celle du test 9) :
+
+```bash
+curl -G "http://localhost:8001/api/v1/analyze" \
+  --data-urlencode "fen=rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+```
+
+**Attendu :** l'analyse est **complète**, les cinq sources à `"ok": true`, alors
+même qu'aucune clé n'est configurée. Les réponses Lichess et YouTube proviennent
+du cache MongoDB.
+
+**Sur une position jamais analysée** (ici 1.d4 Cf6 2.c4 g6 3.Cc3 Fg7) :
+
+```bash
+curl -G "http://localhost:8001/api/v1/analyze" \
+  --data-urlencode "fen=rnbqk2r/ppppppbp/5np1/8/2PP4/2N5/PP2PPPP/R1BQKBNR w KQkq - 2 4"
+```
+
+**Attendu :** l'analyse aboutit quand même, sur la seule évaluation du moteur —
+`sources.lichess` passe à `"ok": false` avec le message d'authentification,
+`theoretical_moves` est vide et le résumé bascule sur Stockfish. `youtube`
+n'apparaît pas dans `sources` : faute de réponse de Lichess, aucune ouverture
+n'est nommée, donc l'agent ne cherche ni contexte ni vidéo (même aiguillage
+qu'au test 10).
+
+Supprimer ensuite le backend jetable :
+
+```bash
+docker rm -f ffe-test-nokeys
+```
+
+---
+
+## 9. En cas d'échec
+
+| Symptôme | Cause probable | Solution |
+|----------|----------------|----------|
+| `milvus` reste `unhealthy` | Démarrage encore en cours | Attendre 90 s, puis `docker compose logs milvus` |
+| `milvus` redémarre en boucle | `etcd` ou `minio` sont arrêtés | `docker compose up -d etcd minio` |
+| `vector-search` ne renvoie rien | Corpus non chargé | Relancer le test 2 (ingestion) |
+| `/moves` renvoie 502 | Token Lichess absent ou invalide | Renseigner `LICHESS_TOKEN` dans `.env`, puis `docker compose up -d backend` |
+| `/videos` renvoie 503 | Clé YouTube absente ou quota dépassé | Vérifier `YOUTUBE_API_KEY` et le quota dans la console Google Cloud |
+| `/evaluate` renvoie 503 | Moteur introuvable | `docker compose exec backend ls /usr/games/stockfish` |
+| L'interface reste vide | Backend non démarré | `docker compose ps`, puis `docker compose logs backend` |
+| Port déjà utilisé au démarrage | Conflit avec un autre service | Modifier `BACKEND_PORT` ou `FRONTEND_PORT` dans `.env` |
+| Seules 3 sources dans `analyze` | Position sans nom d'ouverture | Comportement normal, voir test 10 |
+
+Consulter les journaux d'un service :
+
+```bash
+docker compose logs backend --tail 50
+docker compose logs -f backend      # en continu
+```
+
+---
+
+## 10. Récapitulatif
+
+| # | Test | Résultat |
+|---|------|----------|
+| 1 | Six services sains | ☐ |
+| 2 | Corpus chargé dans Milvus | ☐ |
+| 3 | Disponibilité du backend | ☐ |
+| 4 | Documentation Swagger | ☐ |
+| 5 | Coups théoriques (Lichess) | ☐ |
+| 6 | Évaluation moteur (Stockfish) | ☐ |
+| 7 | Recherche vectorielle (Milvus) | ☐ |
+| 8 | Vidéos explicatives (YouTube) | ☐ |
+| 9 | Analyse complète, cinq sources | ☐ |
+| 10 | Analyse hors théorie | ☐ |
+| 11 | Rejet des positions invalides | ☐ |
+| 12 | Interface servie | ☐ |
+| 13 | Synchronisation de la position | ☐ |
+| 14 | Lecture d'une vidéo | ☐ |
+| 15 | Position hors théorie depuis l'interface | ☐ |
+| 16 | Réinitialisation de l'échiquier | ☐ |
+| 17 | Proxy nginx | ☐ |
+| 18 | Historique des analyses | ☐ |
+| 19 | Mise en cache des appels externes | ☐ |
+| 20 | Expiration automatique du cache | ☐ |
+| 21 | Persistance des volumes | ☐ |
+| 22 | Suite de tests automatisés | ☐ |
+| 23 | Qualité du code | ☐ |
+| 24 | Panne de MongoDB | ☐ |
+| 25 | Panne de Milvus | ☐ |
+| 26 | Clés d'API absentes | ☐ |
+
+Pour arrêter le système en conservant les données :
+
+```bash
+docker compose down
+```
+
+Pour tout supprimer, volumes compris (remise à zéro complète) :
+
+```bash
+docker compose down -v
+```
