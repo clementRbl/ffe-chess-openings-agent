@@ -133,6 +133,11 @@ curl "http://localhost:8000/api/v1/evaluate/rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R
 position de départ est très légèrement favorable aux Blancs) et un `best_move`
 de quatre caractères comme `d2d4` ou `e2e4`.
 
+> Le score est exprimé **du point de vue des Blancs** : positif = avantage aux
+> Blancs, négatif = avantage aux Noirs, quel que soit le camp au trait. Les
+> moteurs raisonnent nativement du point de vue du joueur qui doit jouer ;
+> l'API normalise cette valeur.
+
 ### 3.5 Test 7 — Recherche vectorielle (Milvus + Wikichess)
 
 ```bash
@@ -187,8 +192,9 @@ le roi blanc.
 **Attendu :**
 
 - `in_theory` vaut `false` et `theoretical_moves` est vide ;
-- `evaluation` indique `"type":"mate"`, `"value":1` et `"best_move":"d8h4"` —
-  le moteur annonce le mat en un coup par Dh4# ;
+- `evaluation` indique `"type":"mate"`, `"value":-1` et `"best_move":"d8h4"` —
+  le moteur annonce le mat en un coup par Dh4#, délivré par les **Noirs** ;
+  le score est toujours donné du point de vue des Blancs, d'où le signe négatif ;
 - `sources` ne contient que **trois** entrées (`lichess`, `stockfish`, `mongo`) ;
 - `summary` commence par `Position hors théorie : suivez l'évaluation du moteur.`
 
