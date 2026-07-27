@@ -13,7 +13,7 @@ export class TourService {
   /** Étapes de la visite, dans l'ordre de lecture de l'interface. */
   private readonly steps: DriveStep[] = [
     {
-      element: '.board-panel',
+      element: '.board-card',
       popover: {
         title: 'Ton échiquier',
         description:

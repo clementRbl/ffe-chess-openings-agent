@@ -221,10 +221,14 @@ Ouvrir http://localhost:4200 **dans une fenêtre de navigation privée** (la
 visite guidée ne se déclenche seule qu'au premier passage, l'information étant
 mémorisée dans le navigateur).
 
-**Attendu :** le titre « Agent IA — Ouvertures d'échecs », un échiquier en
-position de départ à gauche, le panneau « Les conseils de l'assistant » à
-droite, et la **visite guidée** qui s'ouvre sur la première étape
-(« Ton échiquier »). La parcourir jusqu'au bout avec « Suivant ».
+**Attendu :** l'en-tête « Ouvertures » avec sa pastille cavalier, un échiquier
+en position de départ à gauche, et à droite le bandeau de verdict (badge « Dans
+la théorie » puis le nom de l'ouverture en gros). La **visite guidée** s'ouvre
+sur la première étape (« Ton échiquier ») ; la parcourir jusqu'au bout avec
+« Suivant ».
+
+> Sur la position de départ, Lichess ne nomme aucune ouverture : le bandeau
+> affiche « Ouverture non identifiée », ce qui est normal.
 
 > Le nombre d'étapes s'adapte à ce qui est affiché : sur la position de départ,
 > les cartes « Comprendre cette ouverture » et « Vidéos explicatives » sont

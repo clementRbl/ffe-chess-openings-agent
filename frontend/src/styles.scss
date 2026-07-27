@@ -3,6 +3,47 @@
 /* Habillage de la visite guidée (driver.js). */
 @import 'driver.js/dist/driver.css';
 
+/*
+ * Jetons de design.
+ *
+ * La palette est chaude — fond parchemin, texte encre — plutôt que le gris
+ * bleuté habituel des interfaces web : elle évoque le papier des manuels
+ * d'ouvertures. Le vert profond sert de couleur d'action, la terre cuite de
+ * signal secondaire, et les deux se retrouvent sur l'échiquier.
+ *
+ * Les titres sont en serif et le texte courant en sans-serif : le contraste
+ * hiérarchise l'écran sans multiplier les tailles ni les graisses.
+ */
+:root {
+  --paper: #f7f4ee;
+  --paper-raised: #fffdf9;
+  --paper-sunken: #efeae0;
+
+  --ink: #1c1a17;
+  --ink-soft: #5b554c;
+  --ink-muted: #8b8478;
+
+  --rule: #e2dcd0;
+  --rule-strong: #d0c8b8;
+
+  --forest: #14624a;
+  --forest-soft: rgba(20, 98, 74, 0.1);
+  --clay: #bf5c38;
+  --clay-soft: rgba(191, 92, 56, 0.1);
+  --amber-soft: rgba(180, 128, 32, 0.13);
+  --amber-ink: #8a6210;
+
+  --serif:
+    'Iowan Old Style', 'Palatino Linotype', Palatino, Charter, Georgia, serif;
+  --sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(28, 26, 23, 0.05);
+  --shadow: 0 10px 30px rgba(28, 26, 23, 0.08);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -11,11 +52,93 @@ html,
 body {
   margin: 0;
   padding: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  background: #f9fafb;
+  min-height: 100%;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--paper);
+}
+
+::selection {
+  background: var(--amber-soft);
+}
+
+/*
+ * Visite guidée : on réaccorde le cartouche de driver.js à la palette (papier,
+ * titres en serif) pour qu'il ne détonne pas au milieu de l'interface.
+ */
+.driver-popover {
+  padding: 1.15rem 1.3rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-lg);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+}
+
+.driver-popover-title {
+  margin-bottom: 0.5rem;
+  font-family: var(--serif);
+  font-size: 1.14rem;
+  font-weight: 600;
+  color: var(--forest);
+}
+
+.driver-popover-description {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+/* Compteur d'étapes : il partage sa ligne avec les boutons, il doit rester
+   compact sous peine de passer à la ligne et de les bousculer. */
+.driver-popover-progress-text {
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.driver-popover-close-btn {
+  color: var(--ink-muted);
+
+  &:hover {
+    color: var(--ink);
+  }
+}
+
+.driver-popover-navigation-btns button {
+  padding: 0.38rem 0.9rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  text-shadow: none;
+  font-size: 0.83rem;
+  font-weight: 500;
+
+  &:hover:not(:disabled) {
+    background: var(--forest);
+    border-color: var(--forest);
+    color: #fff;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+}
+
+/* Flèche du cartouche, dans les quatre orientations possibles. */
+.driver-popover-arrow-side-left {
+  border-left-color: var(--paper-raised);
+}
+
+.driver-popover-arrow-side-right {
+  border-right-color: var(--paper-raised);
+}
+
+.driver-popover-arrow-side-top {
+  border-top-color: var(--paper-raised);
+}
+
+.driver-popover-arrow-side-bottom {
+  border-bottom-color: var(--paper-raised);
 }

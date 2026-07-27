@@ -28,6 +28,14 @@ export class AppComponent implements AfterViewInit {
   error: string | null = null;
   currentFen = START_FEN;
 
+  // Couleurs de l'échiquier, accordées à la palette de l'interface. Elles sont
+  // passées en entrées du composant plutôt que définies en CSS, la librairie
+  // peignant les cases elle-même.
+  readonly boardLightTile = '#efe6d4';
+  readonly boardDarkTile = '#a98a63';
+  readonly boardHighlight = 'rgba(196, 150, 46, 0.45)';
+  readonly boardLegalMove = 'rgba(20, 98, 74, 0.65)';
+
   /** Vidéo en cours de lecture, ou ``null`` si aucune n'a été demandée. */
   activeVideo: VideoResult | null = null;
   /** Section « détails techniques », repliée par défaut. */

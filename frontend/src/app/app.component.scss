@@ -1,48 +1,71 @@
 :host {
   display: block;
   min-height: 100vh;
-  color: #1f2933;
 }
+
+// --- En-tête ---------------------------------------------------------------
 
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1.5rem;
   flex-wrap: wrap;
-  padding: 1.25rem 2rem;
-  background: #14213d;
-  color: #fff;
+  padding: 1.1rem 2.75rem;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-raised);
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  // Cavalier en pastille : une marque simple, sans logo à produire.
+  .mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: var(--forest);
+    color: var(--paper-raised);
+    font-size: 1.35rem;
+    line-height: 1;
+  }
 
   h1 {
     margin: 0;
-    font-size: 1.4rem;
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
   }
 
   .subtitle {
-    margin: 0.25rem 0 0;
-    font-size: 0.85rem;
-    opacity: 0.8;
+    margin: 0.1rem 0 0;
+    color: var(--ink-muted);
+    font-size: 0.78rem;
   }
 
-  // Bouton volontairement contrasté : c'est le point d'entrée d'un utilisateur
-  // qui ne sait pas par où commencer.
   .tour-button {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.5rem 1rem;
-    border: none;
+    gap: 0.5rem;
+    padding: 0.55rem 1.05rem;
+    border: 1px solid var(--forest);
     border-radius: 999px;
-    background: #fbbf24;
-    color: #1f2933;
+    background: var(--forest);
+    color: var(--paper-raised);
     cursor: pointer;
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-sm);
+    transition: background 0.16s ease;
 
     &:hover {
-      background: #fcd34d;
+      background: #0f4d3a;
     }
 
     .tour-icon {
@@ -52,43 +75,70 @@
       width: 1.15rem;
       height: 1.15rem;
       border-radius: 50%;
-      background: #1f2933;
-      color: #fbbf24;
-      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.22);
+      font-size: 0.72rem;
       font-weight: 700;
     }
   }
 }
 
+// --- Mise en page : échiquier fixe à gauche, conseils à droite --------------
+
 .layout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  padding: 2rem;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: start;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 2.25rem 2.75rem 4rem;
 }
 
-.board-panel {
-  flex: 0 0 auto;
+.board-column {
+  position: sticky;
+  top: 1.75rem;
+}
 
-  .board-actions {
-    margin-top: 1rem;
+.board-card {
+  padding: 1rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow);
 
-    button {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 6px;
-      background: #14213d;
-      color: #fff;
-      cursor: pointer;
-      font-size: 0.9rem;
+  ngx-chess-board {
+    display: block;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
 
-      &:hover {
-        background: #22335c;
-      }
+  .reset {
+    width: 100%;
+    margin-top: 0.9rem;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition:
+      color 0.16s ease,
+      border-color 0.16s ease;
+
+    &:hover {
+      color: var(--clay);
+      border-color: var(--clay);
     }
   }
 }
+
+.advice-column {
+  min-width: 0;
+}
+
+// --- Éléments communs ------------------------------------------------------
 
 // Infobulle légère, déclenchée au survol comme au focus clavier.
 [data-tip] {
@@ -98,20 +148,23 @@
   &:focus-visible::after {
     content: attr(data-tip);
     position: absolute;
-    bottom: calc(100% + 8px);
+    bottom: calc(100% + 9px);
     left: 0;
-    z-index: 20;
+    z-index: 30;
     width: max-content;
-    max-width: 280px;
-    padding: 0.5rem 0.65rem;
-    border-radius: 6px;
-    background: #1f2933;
-    color: #fff;
+    max-width: 290px;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius);
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--sans);
     font-size: 0.78rem;
     font-weight: 400;
-    line-height: 1.35;
+    line-height: 1.5;
+    letter-spacing: 0;
+    text-transform: none;
     white-space: normal;
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+    box-shadow: var(--shadow);
   }
 }
 
@@ -122,423 +175,552 @@
   justify-content: center;
   width: 1.05rem;
   height: 1.05rem;
-  margin-left: 0.3rem;
+  margin-left: 0.4rem;
+  border: 1px solid var(--rule-strong);
   border-radius: 50%;
-  background: #e5e7eb;
-  color: #4b5563;
-  font-size: 0.7rem;
+  color: var(--ink-muted);
+  font-family: var(--sans);
+  font-size: 0.68rem;
   font-weight: 700;
   cursor: help;
 
   &:hover {
-    background: #d1d5db;
+    color: var(--forest);
+    border-color: var(--forest);
   }
 }
 
-.agent-panel {
-  flex: 1 1 420px;
-  min-width: 320px;
-  max-width: 620px;
+.status {
+  padding: 0.9rem 1.15rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
 
-  h2 {
-    margin-top: 0;
-    font-size: 1.15rem;
+  &.loading {
+    background: var(--amber-soft);
+    color: var(--amber-ink);
   }
 
-  .status {
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
+  &.error {
+    background: var(--clay-soft);
+    color: var(--clay);
+  }
+}
 
-    &.loading {
-      background: #e0f2fe;
-      color: #075985;
+// --- Bandeau de verdict ----------------------------------------------------
+
+.verdict {
+  padding: 1.35rem 1.6rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--forest);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  background: var(--paper-sunken);
+
+  .badge {
+    display: inline-block;
+    padding: 0.22rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    cursor: help;
+
+    &.in-theory {
+      background: var(--forest-soft);
+      color: var(--forest);
     }
 
-    &.error {
-      background: #fee2e2;
-      color: #991b1b;
+    &.out-theory {
+      background: var(--clay-soft);
+      color: var(--clay);
     }
+  }
+
+  .opening {
+    margin: 0.6rem 0 0;
+    font-family: var(--serif);
+    font-size: 1.85rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
   }
 
   .summary {
-    margin-bottom: 1rem;
+    margin: 0.5rem 0 0;
+    max-width: 62ch;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+}
 
-    .badge {
-      display: inline-block;
-      padding: 0.2rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: help;
+// --- Cartes ----------------------------------------------------------------
 
-      &.in-theory {
-        background: #dcfce7;
-        color: #166534;
-      }
+// Deux cartes côte à côte tant que la place le permet, empilées ensuite.
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 1.15rem;
+  margin-bottom: 1.15rem;
+}
 
-      &.out-theory {
-        background: #fef3c7;
-        color: #92400e;
-      }
-    }
+.card {
+  padding: 1.2rem 1.35rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-sm);
 
-    .opening {
-      margin-left: 0.5rem;
-      font-weight: 600;
-    }
+  &.wide {
+    margin-bottom: 1.15rem;
   }
 
-  .card {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 0.9rem 1rem;
-    margin-bottom: 1rem;
-
-    h3 {
-      display: flex;
-      align-items: center;
-      margin: 0 0 0.6rem;
-      font-size: 0.98rem;
-    }
-
-    .source-tag {
-      margin-left: auto;
-      padding-left: 0.75rem;
-      color: #9ca3af;
-      font-size: 0.72rem;
-      font-weight: 400;
-      white-space: nowrap;
-    }
-
-    .muted {
-      color: #6b7280;
-      font-size: 0.85rem;
-      margin: 0;
-      line-height: 1.45;
-    }
-  }
-
-  // Barre d'évaluation : la part blanche à gauche, la part noire à droite.
-  // Un coup d'œil suffit à voir qui est mieux, sans lire un chiffre.
-  .eval-bar {
+  h3 {
     display: flex;
-    height: 14px;
-    border-radius: 999px;
-    overflow: hidden;
-    background: #1f2933;
-    border: 1px solid #d1d5db;
-
-    .white-share {
-      background: #f9fafb;
-      border-right: 1px solid #9ca3af;
-      transition: width 0.25s ease;
-    }
+    align-items: center;
+    margin: 0 0 1rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--serif);
+    font-size: 1.08rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
-  .eval-legend {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 0.2rem;
-    color: #9ca3af;
-    font-size: 0.7rem;
+  .source-tag {
+    margin-left: auto;
+    padding-left: 0.9rem;
+    color: var(--ink-muted);
+    font-family: var(--sans);
+    font-size: 0.68rem;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
   }
 
-  .eval {
+  .muted {
+    margin: 0;
+    color: var(--ink-muted);
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+}
+
+// --- Évaluation ------------------------------------------------------------
+
+.eval {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  margin: 0 0 0.85rem;
+
+  strong {
+    font-family: var(--serif);
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .eval-hint {
+    color: var(--ink-soft);
+    font-size: 0.86rem;
+  }
+}
+
+// La barre penche du côté de celui qui mène : un coup d'œil suffit.
+.eval-bar {
+  display: flex;
+  height: 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--ink);
+
+  .white-share {
+    background: var(--paper-raised);
+    border-right: 1px solid var(--rule-strong);
+    transition: width 0.3s ease;
+  }
+}
+
+.eval-legend {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.35rem;
+  color: var(--ink-muted);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.best {
+  display: flex;
+  align-items: center;
+  margin: 0.95rem 0 0;
+  color: var(--ink-muted);
+  font-size: 0.82rem;
+
+  code {
+    margin-left: 0.4rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 5px;
+    background: var(--paper-sunken);
+    color: var(--ink-soft);
+  }
+}
+
+// --- Coups de référence ----------------------------------------------------
+
+// Liste ordonnée : le rang du coup est une information en soi.
+.moves {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: rank;
+
+  li {
     display: flex;
     align-items: baseline;
     gap: 0.6rem;
-    margin: 0.6rem 0 0;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--rule);
+    counter-increment: rank;
 
-    strong {
-      font-size: 1.35rem;
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
     }
 
-    .eval-hint {
-      color: #4b5563;
-      font-size: 0.85rem;
+    &::before {
+      content: counter(rank);
+      flex: 0 0 auto;
+      width: 1.1rem;
+      color: var(--ink-muted);
+      font-size: 0.72rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    // Le coup le plus joué se distingue des suivants.
+    &:first-child .san {
+      color: var(--forest);
+    }
+
+    .san {
+      font-family: var(--serif);
+      font-size: 1.02rem;
+      font-weight: 600;
+    }
+
+    .stats {
+      margin-left: auto;
+      color: var(--ink-muted);
+      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums;
     }
   }
+}
 
-  // Précision sur le périmètre des vidéos : elles concernent l'ouverture, pas
-  // le coup joué (voir la note sur le système d'analyse vidéo par position).
-  .scope-note {
-    margin: -0.25rem 0 0.75rem;
-    color: #6b7280;
-    font-size: 0.78rem;
-    line-height: 1.4;
+// --- Contexte de l'ouverture ----------------------------------------------
+
+.chunk {
+  margin-bottom: 1.1rem;
+
+  &:last-child {
+    margin-bottom: 0;
   }
 
-  .best {
+  .chunk-title {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: var(--clay);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+  }
+
+  p {
+    margin: 0;
+    max-width: 72ch;
+    color: var(--ink-soft);
+    font-size: 0.89rem;
+    line-height: 1.68;
+  }
+}
+
+// --- Vidéos ----------------------------------------------------------------
+
+.scope-note {
+  margin: -0.4rem 0 1rem;
+  color: var(--ink-muted);
+  font-size: 0.79rem;
+  line-height: 1.5;
+
+  strong {
+    color: var(--ink-soft);
+  }
+}
+
+.video-player {
+  margin-bottom: 1.1rem;
+}
+
+.video-frame {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+
+  iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius);
+  }
+}
+
+.video-playing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  margin-top: 0.6rem;
+
+  .playing-title {
+    color: var(--ink-soft);
+    font-size: 0.83rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.link {
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--clay);
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Les vignettes s'organisent en grille : la liste verticale étirait la page.
+.videos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  .video-card {
     display: flex;
     align-items: center;
-    margin: 0.5rem 0 0;
-    color: #4b5563;
-    font-size: 0.82rem;
+    gap: 0.7rem;
+    width: 100%;
+    padding: 0.45rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background 0.16s ease,
+      border-color 0.16s ease;
 
-    code {
-      margin-left: 0.3rem;
-      padding: 0.1rem 0.35rem;
-      border-radius: 4px;
-      background: #f3f4f6;
-    }
-  }
+    &:hover {
+      background: var(--paper-sunken);
+      border-color: var(--rule);
 
-  .moves {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-
-    li {
-      background: #f3f4f6;
-      border-radius: 6px;
-      padding: 0.3rem 0.6rem;
-      font-size: 0.85rem;
-
-      .san {
-        font-weight: 600;
-        margin-right: 0.4rem;
-      }
-
-      .stats {
-        color: #6b7280;
+      .thumb .play {
+        opacity: 1;
       }
     }
-  }
 
-  .chunk {
-    font-size: 0.85rem;
-    margin: 0 0 0.6rem;
-    line-height: 1.45;
-
-    .chunk-title {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 0.15rem;
+    &.active {
+      background: var(--forest-soft);
+      border-color: rgba(20, 98, 74, 0.3);
     }
   }
 
-  // --- Vidéos : vignettes cliquables, lecteur uniquement à la demande ---
-
-  .video-player {
-    margin-bottom: 0.85rem;
-  }
-
-  .video-frame {
+  .thumb {
     position: relative;
-    padding-bottom: 56.25%;
-    height: 0;
+    flex: 0 0 auto;
+    width: 82px;
+    height: 46px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--paper-sunken);
 
-    iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
+    img {
       width: 100%;
       height: 100%;
-      border-radius: 6px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .play {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(28, 26, 23, 0.35);
+      color: #fff;
+      font-size: 0.72rem;
+      opacity: 0;
+      transition: opacity 0.16s ease;
     }
   }
 
-  .video-playing {
+  .meta {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
+    flex-direction: column;
+    gap: 0.15rem;
+    overflow: hidden;
 
-    .playing-title {
-      font-size: 0.82rem;
-      font-weight: 600;
+    .title {
+      font-size: 0.8rem;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    }
+
+    .channel {
+      color: var(--ink-muted);
+      font-size: 0.72rem;
     }
   }
 
-  .link {
-    flex: 0 0 auto;
+  .external {
+    display: inline-block;
+    margin: 0.1rem 0 0 calc(82px + 1.15rem);
+    color: var(--ink-muted);
+    font-size: 0.7rem;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--clay);
+    }
+  }
+}
+
+// --- Détails techniques ----------------------------------------------------
+
+.technical {
+  margin-top: 0.4rem;
+
+  .technical-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
     border: none;
     background: none;
-    padding: 0;
-    color: #1d4ed8;
+    color: var(--ink-muted);
     font-size: 0.8rem;
     cursor: pointer;
 
     &:hover {
-      text-decoration: underline;
-    }
-  }
-
-  .videos {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-
-    li {
-      margin-bottom: 0.6rem;
+      color: var(--ink-soft);
     }
 
-    .video-card {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      width: 100%;
-      padding: 0.35rem;
-      border: 1px solid transparent;
-      border-radius: 8px;
-      background: none;
-      text-align: left;
-      cursor: pointer;
-
-      &:hover {
-        background: #f9fafb;
-        border-color: #e5e7eb;
-      }
-
-      &.active {
-        background: #eff6ff;
-        border-color: #bfdbfe;
-      }
-    }
-
-    .thumb {
-      position: relative;
-      flex: 0 0 auto;
-      width: 96px;
-      height: 54px;
-      border-radius: 5px;
-      overflow: hidden;
-      background: #e5e7eb;
-
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-      }
-
-      .play {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-size: 0.9rem;
-        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-        background: rgba(0, 0, 0, 0.18);
-      }
-    }
-
-    .meta {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-      overflow: hidden;
-
-      .title {
-        font-size: 0.84rem;
-        line-height: 1.3;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-
-      .channel {
-        color: #6b7280;
-        font-size: 0.75rem;
-      }
-    }
-
-    .external {
+    .chevron {
       display: inline-block;
-      margin: 0.1rem 0 0 calc(96px + 1.05rem);
-      color: #6b7280;
-      font-size: 0.72rem;
-      text-decoration: none;
+      font-size: 1rem;
+      transition: transform 0.18s ease;
 
-      &:hover {
-        color: #1d4ed8;
-        text-decoration: underline;
+      &.open {
+        transform: rotate(90deg);
       }
     }
   }
 
-  // --- Détails techniques, repliés par défaut ---
+  .technical-body {
+    padding: 0.9rem 0 0.25rem;
+  }
 
-  .technical {
-    margin-top: 0.5rem;
+  .explain {
+    margin: 0 0 0.6rem;
+    max-width: 72ch;
+    color: var(--ink-muted);
+    font-size: 0.81rem;
+    line-height: 1.6;
 
-    .technical-toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.35rem 0;
-      border: none;
-      background: none;
-      color: #6b7280;
-      font-size: 0.82rem;
-      cursor: pointer;
-
-      &:hover {
-        color: #1f2933;
-      }
-
-      .chevron {
-        display: inline-block;
-        transition: transform 0.15s ease;
-
-        &.open {
-          transform: rotate(90deg);
-        }
-      }
-    }
-
-    .technical-body {
-      padding: 0.75rem 0 0.25rem;
-    }
-
-    .explain {
-      margin: 0 0 0.5rem;
-      color: #4b5563;
-      font-size: 0.8rem;
-      line-height: 1.5;
-    }
-
-    .fen {
-      display: block;
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-      border-radius: 6px;
-      background: #f3f4f6;
-      font-size: 0.78rem;
-      word-break: break-all;
+    strong {
+      color: var(--ink-soft);
     }
   }
 
-  .sources {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  .fen {
+    display: block;
+    margin-bottom: 1.2rem;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--paper-sunken);
+    color: var(--ink-soft);
+    font-size: 0.76rem;
+    line-height: 1.5;
+    word-break: break-all;
+  }
+}
 
-    .source {
-      font-size: 0.72rem;
-      padding: 0.15rem 0.55rem;
-      border-radius: 999px;
-      background: #dcfce7;
-      color: #166534;
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 
-      &.ko {
-        background: #fee2e2;
-        color: #991b1b;
-        cursor: help;
-      }
+  .source {
+    padding: 0.22rem 0.6rem;
+    border-radius: 999px;
+    background: var(--forest-soft);
+    color: var(--forest);
+    font-size: 0.72rem;
+
+    &.ko {
+      background: var(--clay-soft);
+      color: var(--clay);
+      cursor: help;
     }
+  }
+}
+
+// --- Adaptation aux écrans étroits -----------------------------------------
+
+@media (max-width: 1040px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1.75rem 1.5rem 3rem;
+  }
+
+  .board-column {
+    position: static;
+    justify-self: center;
+  }
+}
+
+@media (max-width: 620px) {
+  .app-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .layout {
+    padding: 1.25rem 1rem 2.5rem;
+  }
+
+  .verdict .opening {
+    font-size: 1.5rem;
   }
 }
