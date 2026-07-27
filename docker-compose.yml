@@ -11,11 +11,15 @@ services:
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
       MILVUS_HOST: milvus
       MILVUS_PORT: 19530
+      MONGO_HOST: mongo
+      MONGO_PORT: 27017
       HF_HOME: /cache/huggingface
     volumes:
       - hf_cache:/cache/huggingface
     depends_on:
       milvus:
+        condition: service_healthy
+      mongo:
         condition: service_healthy
     restart: unless-stopped
 
@@ -26,6 +30,21 @@ services:
       - "${FRONTEND_PORT:-4200}:80"
     depends_on:
       - backend
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:8.0
+    container_name: ffe-chess-mongo
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-ffe_chess}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   etcd:
@@ -85,6 +104,7 @@ services:
 
 volumes:
   hf_cache:
+  mongo_data:
   etcd_data:
   minio_data:
   milvus_data:

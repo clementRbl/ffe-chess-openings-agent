@@ -42,6 +42,15 @@ class Settings(BaseSettings):
     milvus_port: int = 19530
     milvus_collection: str = "wikichess_openings"
 
+    # Base de données MongoDB (cache des API externes + historique des analyses).
+    mongo_host: str = "localhost"
+    mongo_port: int = 27017
+    mongo_database: str = "ffe_chess"
+    mongo_cache_collection: str = "api_cache"
+    mongo_analyses_collection: str = "analyses"
+    mongo_cache_ttl_seconds: int = 86400
+    mongo_timeout_ms: int = 3000
+
     # Embeddings (sentence-transformers).
     embedding_model: str = "Qwen/Qwen3-Embedding-0.6B"
     embedding_dim: int = 1024
@@ -59,6 +68,11 @@ class Settings(BaseSettings):
     def milvus_uri(self) -> str:
         """URI de connexion à Milvus construite à partir de l'hôte et du port."""
         return f"http://{self.milvus_host}:{self.milvus_port}"
+
+    @property
+    def mongo_uri(self) -> str:
+        """URI de connexion à MongoDB construite à partir de l'hôte et du port."""
+        return f"mongodb://{self.mongo_host}:{self.mongo_port}"
 
 
 settings = Settings()

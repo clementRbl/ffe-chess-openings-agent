@@ -6,7 +6,6 @@ pertinentes avec leurs métadonnées (liens de visionnage et d'intégration).
 """
 
 from fastapi import APIRouter, HTTPException
-from starlette.concurrency import run_in_threadpool
 
 from app.graph.videos_graph import videos_graph
 from app.schemas.video import VideosResponse
@@ -19,9 +18,8 @@ router = APIRouter(tags=["videos"])
 async def get_videos(opening: str) -> VideosResponse:
     """Renvoie des vidéos YouTube explicatives pour une ouverture.
 
-    La recherche (construction de la requête puis appel YouTube) est orchestrée
-    par le workflow LangGraph. L'appel réseau étant bloquant, l'invocation du
-    graph est déléguée à un thread.
+    La recherche (construction de la requête, lecture du cache MongoDB puis
+    appel YouTube si nécessaire) est orchestrée par le workflow LangGraph.
 
     Args:
         opening: Nom de l'ouverture (ex. « défense sicilienne »).
@@ -31,7 +29,7 @@ async def get_videos(opening: str) -> VideosResponse:
             (par exemple en cas de dépassement de quota).
     """
     try:
-        state = await run_in_threadpool(videos_graph.invoke, {"opening": opening})
+        state = await videos_graph.ainvoke({"opening": opening})
     except YouTubeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 

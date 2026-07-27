@@ -4,12 +4,18 @@ Définit un graphe LangGraph à deux étapes : construction d'une requête de
 recherche ciblée à partir du nom de l'ouverture, puis appel à l'API YouTube pour
 récupérer les vidéos pertinentes. Ce graphe permet à l'agent de proposer
 automatiquement des ressources vidéo.
+
+Les résultats sont mis en cache dans MongoDB afin de préserver le quota
+journalier de l'API YouTube Data v3.
 """
 
 from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
+from starlette.concurrency import run_in_threadpool
 
+from app.graph.cache import cache_get, cache_set
+from app.schemas.video import VideoResult
 from app.services.youtube import youtube_service
 
 
@@ -32,9 +38,21 @@ def _build_query(state: VideosState) -> VideosState:
     return {"query": youtube_service.build_query(state["opening"])}
 
 
-def _fetch_videos(state: VideosState) -> VideosState:
-    """Nœud 2 : interroge l'API YouTube pour récupérer les vidéos."""
-    return {"videos": youtube_service.search(state["opening"])}
+async def _fetch_videos(state: VideosState) -> VideosState:
+    """Nœud 2 : renvoie les vidéos, depuis le cache MongoDB ou l'API YouTube.
+
+    L'appel à l'API YouTube étant bloquant, il est délégué à un thread pour ne
+    pas bloquer la boucle d'événements.
+    """
+    opening = state["opening"]
+    cache_key = f"youtube:{opening}"
+    cached, _ = await cache_get(cache_key)
+    if cached is not None:
+        return {"videos": [VideoResult.model_validate(video) for video in cached]}
+
+    videos = await run_in_threadpool(youtube_service.search, opening)
+    await cache_set(cache_key, [video.model_dump() for video in videos])
+    return {"videos": videos}
 
 
 def build_videos_graph():

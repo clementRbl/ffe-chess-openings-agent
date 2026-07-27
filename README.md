@@ -11,6 +11,9 @@ combinant plusieurs sources :
 - du **contexte d'ouverture** via une recherche vectorielle (**Milvus** + Wikichess) ;
 - des **vidéos explicatives** pertinentes (**YouTube Data v3**).
 
+Les réponses des API externes sont mises en cache dans **MongoDB**, qui conserve
+également l'historique des analyses produites par l'agent.
+
 Le tout est orchestré par un agent **LangGraph** et exposé via une API
 **FastAPI**, avec une interface **Angular** (échiquier interactif).
 
@@ -97,6 +100,34 @@ Puis interrogez la base :
 curl "http://localhost:8000/api/v1/vector-search?query=defense%20sicilienne&top_k=2"
 ```
 
+## Cache et historique (MongoDB)
+
+MongoDB remplit deux rôles dans le POC, dans la base `ffe_chess` :
+
+| Collection | Rôle |
+|------------|------|
+| `api_cache` | Cache des réponses Lichess et YouTube, avec expiration automatique (index TTL, 24 h par défaut). L'interface analysant la position **à chaque coup joué**, ce cache évite d'épuiser le quota YouTube et de solliciter Lichess inutilement. |
+| `analyses` | Historique des analyses rendues par l'agent (position, ouverture, coups retenus, évaluation, résumé). Utile pour la démonstration et comme jeu de positions annotées. |
+
+Une panne de MongoDB **ne bloque pas** l'agent : l'analyse se poursuit sans cache
+et l'état de la source est signalé dans le champ `sources` de la réponse.
+
+Inspecter le contenu de la base :
+
+```bash
+docker compose exec mongo mongosh ffe_chess --quiet --eval "db.analyses.find().sort({created_at:-1}).limit(3)"
+docker compose exec mongo mongosh ffe_chess --quiet --eval "db.api_cache.countDocuments()"
+```
+
+## Tests
+
+```bash
+cd backend && uv run pytest
+```
+
+Les tests s'exécutent sans aucun service externe : Lichess, Stockfish, Milvus,
+YouTube et MongoDB sont remplacés par des doublures.
+
 ## Configuration
 
 Toute la configuration passe par des **variables d'environnement** (fichier
@@ -108,6 +139,7 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 | `FRONTEND_PORT`   | Port exposé par l'interface Angular (nginx)            | `4200` |
 | `LICHESS_TOKEN`   | Token personnel Lichess pour l'opening explorer (requis pour `/moves`) | *(vide)* |
 | `YOUTUBE_API_KEY` | Clé API YouTube Data v3 (requise pour `/videos`)       | *(vide)* |
+| `MONGO_DATABASE`  | Nom de la base MongoDB (cache + historique)            | `ffe_chess` |
 
 > **Token Lichess :** l'opening explorer requiert désormais une authentification.
 > Générez un token gratuit (sans scope) sur
