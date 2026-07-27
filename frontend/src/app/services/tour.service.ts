@@ -19,7 +19,8 @@ export class TourService {
         description:
           "Joue un coup en déplaçant une pièce. À chaque coup, l'assistant analyse " +
           'la nouvelle position et met à jour ses conseils, à droite. La pastille ' +
-          'sous le plateau rappelle à qui est le tour de jouer.',
+          'sous le plateau rappelle à qui est le tour de jouer, et « Annuler le ' +
+          'coup » revient en arrière autant de fois que tu veux.',
       },
     },
     {

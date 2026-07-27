@@ -40,9 +40,20 @@
         {{ turnLabel }}
       </p>
 
-      <button type="button" class="reset" (click)="reset()">
-        Réinitialiser la partie
-      </button>
+      <div class="board-actions">
+        <button
+          type="button"
+          class="undo"
+          [disabled]="!canUndo"
+          (click)="undo()"
+        >
+          <span aria-hidden="true">↶</span>
+          Annuler le coup
+        </button>
+        <button type="button" class="reset" (click)="reset()">
+          Réinitialiser
+        </button>
+      </div>
     </div>
   </aside>
 

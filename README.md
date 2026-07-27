@@ -296,7 +296,7 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 | Document | Objet |
 |----------|-------|
 | [docs/note-analyse-video-mcp.md](docs/note-analyse-video-mcp.md) | Note sur le système avancé d'analyse vidéo : bénéfices, limites, architecture MCP, étude de faisabilité (coûts build + opex), alternatives et roadmap |
-| [docs/tests-manuels.md](docs/tests-manuels.md) | Procédure de test manuel de bout en bout : 28 tests couvrant les services, l'API, l'interface, la persistance et la résistance aux pannes |
+| [docs/tests-manuels.md](docs/tests-manuels.md) | Procédure de test manuel de bout en bout : 29 tests couvrant les services, l'API, l'interface, la persistance et la résistance aux pannes |
 
 ## Avancement (étapes de la mission)
 

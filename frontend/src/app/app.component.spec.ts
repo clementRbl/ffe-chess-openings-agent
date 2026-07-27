@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { AppComponent } from './app.component';
 import { VideoResult } from './models/agent.models';
@@ -23,7 +24,7 @@ describe('AppComponent — lecteur vidéo', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [provideHttpClient()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     component = TestBed.createComponent(AppComponent).componentInstance;
@@ -82,13 +83,81 @@ describe('AppComponent — lecteur vidéo', () => {
   });
 });
 
+describe('AppComponent — annulation des coups', () => {
+  let component: AppComponent;
+  let undoCalls: number;
+  let boardFen: string;
+
+  const AFTER_E4 =
+    'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1';
+  const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [AppComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+
+    component = TestBed.createComponent(AppComponent).componentInstance;
+
+    // Doublure du plateau : on ne teste pas la librairie d'échiquier, mais la
+    // synchronisation de l'application avec elle.
+    undoCalls = 0;
+    boardFen = START;
+    component.board = {
+      undo: () => {
+        undoCalls += 1;
+        boardFen = START;
+      },
+      reset: () => {
+        boardFen = START;
+      },
+      getFEN: () => boardFen,
+    } as never;
+  });
+
+  it('n’a rien à annuler sur la position de départ', () => {
+    expect(component.canUndo).toBeFalse();
+
+    component.undo();
+
+    expect(undoCalls).toBe(0);
+  });
+
+  it('permet d’annuler dès qu’un coup a été joué', () => {
+    component.onMove({ fen: AFTER_E4 });
+
+    expect(component.canUndo).toBeTrue();
+  });
+
+  it('annule le coup et resynchronise la position analysée', () => {
+    component.onMove({ fen: AFTER_E4 });
+    expect(component.currentFen).toBe(AFTER_E4);
+
+    component.undo();
+
+    expect(undoCalls).toBe(1);
+    expect(component.currentFen).toBe(START);
+    expect(component.canUndo).toBeFalse();
+    // Le trait suit la position restaurée.
+    expect(component.turnLabel).toBe('Aux Blancs de jouer');
+  });
+
+  it('redevient inactif après une réinitialisation', () => {
+    component.onMove({ fen: AFTER_E4 });
+    component.reset();
+
+    expect(component.canUndo).toBeFalse();
+  });
+});
+
 describe('AppComponent — lisibilité des recommandations', () => {
   let component: AppComponent;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [provideHttpClient()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     component = TestBed.createComponent(AppComponent).componentInstance;

@@ -255,7 +255,23 @@ Jouer **1.e4** en glissant le pion, puis **1…c5** pour les Noirs.
    « Vidéos sur Sicilian Defense » ;
 4. déplier « Détails techniques » : la FEN affichée correspond à la position.
 
-### 4.3 Test 14 — Les infobulles expliquent le vocabulaire
+### 4.3 Test 14 — Annuler un coup resynchronise tout l'écran
+
+Après 1.e4 c5, cliquer sur **Annuler le coup**.
+
+**Attendu :** l'écran revient exactement à l'état d'après 1.e4 — la pièce
+retourne sur sa case, la pastille repasse « Aux Noirs de jouer », le bandeau
+réaffiche « King's Pawn Game », les coups de maîtres redeviennent c5, e5, e6 et
+l'évaluation reprend sa valeur précédente. Aucun élément ne reste sur la
+position abandonnée.
+
+Cliquer une seconde fois.
+
+**Attendu :** retour à la position de départ, et le bouton **se désactive** — il
+n'y a plus rien à annuler. Sur la position de départ, il est grisé dès le
+chargement.
+
+### 4.4 Test 15 — Les infobulles expliquent le vocabulaire
 
 Survoler les marqueurs `?` des cartes, ainsi que le badge « Dans la théorie ».
 
@@ -268,7 +284,7 @@ Laisser ensuite une pièce en prise et la faire capturer.
 **Attendu :** la barre d'évaluation bascule visiblement du côté de l'adversaire
 et la phrase passe à « Avantage net » ou « Position gagnante pour … ».
 
-### 4.4 Test 15 — Les vidéos ne se chargent qu'à la demande
+### 4.5 Test 16 — Les vidéos ne se chargent qu'à la demande
 
 **Attendu avant tout clic :** le titre de la carte reprend le nom de l'ouverture
 (« Vidéos sur Sicilian Defense ») et précise que ces vidéos portent sur
@@ -281,7 +297,7 @@ Cliquer sur une vignette.
 **Attendu :** le lecteur apparaît au-dessus de la liste et la vidéo se lit dans
 la page. Le bouton « Fermer la vidéo » la retire.
 
-### 4.5 Test 16 — La vidéo ne redémarre pas toute seule
+### 4.6 Test 17 — La vidéo ne redémarre pas toute seule
 
 Lancer une vidéo, la laisser tourner quelques secondes, puis **cliquer plusieurs
 fois n'importe où dans la page** (sur un titre, dans le vide, sur une infobulle).
@@ -294,7 +310,7 @@ Jouer ensuite un coup sur l'échiquier.
 lecture continue sans coupure ; sinon le lecteur se ferme et la nouvelle liste
 de vignettes s'affiche.
 
-### 4.6 Test 17 — Position hors théorie depuis l'interface
+### 4.7 Test 18 — Position hors théorie depuis l'interface
 
 Cliquer sur « Réinitialiser la partie », puis jouer **1.f3 e5 2.g4**.
 
@@ -304,7 +320,7 @@ signalée hors théorie, l'évaluation annonce « Mat en 1 » et le coup suggér
 disparaissent, et la carte des coups de maîtres invite à s'appuyer sur le
 moteur.
 
-### 4.7 Test 18 — Les appels passent bien par le proxy
+### 4.8 Test 19 — Les appels passent bien par le proxy
 
 ```bash
 curl http://localhost:4200/api/v1/healthcheck
@@ -318,7 +334,7 @@ problème de CORS.
 
 ## 5. Tests du cache et de l'historique (MongoDB)
 
-### 5.1 Test 19 — Les analyses sont historisées
+### 5.1 Test 20 — Les analyses sont historisées
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet \
@@ -329,7 +345,7 @@ docker compose exec mongo mongosh ffe_chess --quiet \
 `in_theory`, `theoretical_moves`, `evaluation`, `summary` et `created_at`. Les
 positions jouées au § 4 doivent y figurer.
 
-### 5.2 Test 20 — Les appels externes sont mis en cache
+### 5.2 Test 21 — Les appels externes sont mis en cache
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet --eval "db.api_cache.countDocuments()"
@@ -345,7 +361,7 @@ appel n'a été consommé sur le quota YouTube.
 > délai vient de Stockfish et du calcul d'embedding, qui ne sont pas mis en
 > cache. Le cache protège les quotas, pas la latence.
 
-### 5.3 Test 21 — L'expiration automatique est configurée
+### 5.3 Test 22 — L'expiration automatique est configurée
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet \
@@ -359,7 +375,7 @@ C'est lui qui fait purger par MongoDB les entrées de plus de 24 heures.
 
 ## 6. Test de persistance
 
-### Test 22 — Les données survivent à la recréation des conteneurs
+### Test 23 — Les données survivent à la recréation des conteneurs
 
 ```bash
 # 1. Relever les compteurs
@@ -393,7 +409,7 @@ docker volume ls | grep echecs
 
 ## 7. Tests automatisés
 
-### Test 23 — Suite de tests du backend
+### Test 24 — Suite de tests du backend
 
 ```bash
 cd backend && uv run pytest
@@ -404,7 +420,7 @@ cd backend && uv run pytest
 validation FEN, l'aiguillage du graphe, la dégradation gracieuse, le cache et le
 contrat HTTP.
 
-### Test 24 — Suite de tests du frontend
+### Test 25 — Suite de tests du frontend
 
 ```bash
 cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
@@ -414,7 +430,7 @@ cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
 demande, stabilité de l'URL d'intégration, fermeture) et la mise en forme de
 l'évaluation du moteur.
 
-### Test 25 — Qualité du code
+### Test 26 — Qualité du code
 
 ```bash
 cd backend && uv run ruff check . && uv run ruff format --check app tests
@@ -430,7 +446,7 @@ Ces tests vérifient la promesse centrale de l'architecture : **la panne d'une
 source ne doit jamais interrompre l'analyse**. Ils se lisent dans le champ
 `sources` de la réponse.
 
-### 8.1 Test 26 — Panne de MongoDB
+### 8.1 Test 27 — Panne de MongoDB
 
 ```bash
 docker compose stop mongo
@@ -444,7 +460,7 @@ vidéos), et seul `sources.mongo` passe à `"ok": false` avec un message
 d'explication. Le cache et l'historique sont perdus le temps de la panne, rien
 d'autre.
 
-### 8.2 Test 27 — Panne de Milvus
+### 8.2 Test 28 — Panne de Milvus
 
 ```bash
 docker compose stop milvus
@@ -459,7 +475,7 @@ les coups théoriques, l'évaluation et les vidéos sont bien là.
 > Après redémarrage, laisser à Milvus jusqu'à 90 secondes pour redevenir
 > `healthy` avant de rejouer un test.
 
-### 8.3 Test 28 — Clés d'API absentes
+### 8.3 Test 29 — Clés d'API absentes
 
 Plutôt que de modifier `.env`, lancer un backend jetable sans clés sur le port
 8001 — la démonstration reste ainsi utilisable pendant le test :
@@ -557,21 +573,22 @@ docker compose logs -f backend      # en continu
 | 11 | Rejet des positions invalides | ☐ |
 | 12 | Interface servie et visite guidée | ☐ |
 | 13 | Synchronisation de la position | ☐ |
-| 14 | Infobulles du vocabulaire | ☐ |
-| 15 | Vidéos chargées à la demande | ☐ |
-| 16 | La vidéo ne redémarre pas seule | ☐ |
-| 17 | Position hors théorie depuis l'interface | ☐ |
-| 18 | Proxy nginx | ☐ |
-| 19 | Historique des analyses | ☐ |
-| 20 | Mise en cache des appels externes | ☐ |
-| 21 | Expiration automatique du cache | ☐ |
-| 22 | Persistance des volumes | ☐ |
-| 23 | Tests automatisés du backend | ☐ |
-| 24 | Tests automatisés du frontend | ☐ |
-| 25 | Qualité du code | ☐ |
-| 26 | Panne de MongoDB | ☐ |
-| 27 | Panne de Milvus | ☐ |
-| 28 | Clés d'API absentes | ☐ |
+| 14 | Annulation d'un coup | ☐ |
+| 15 | Infobulles du vocabulaire | ☐ |
+| 16 | Vidéos chargées à la demande | ☐ |
+| 17 | La vidéo ne redémarre pas seule | ☐ |
+| 18 | Position hors théorie depuis l'interface | ☐ |
+| 19 | Proxy nginx | ☐ |
+| 20 | Historique des analyses | ☐ |
+| 21 | Mise en cache des appels externes | ☐ |
+| 22 | Expiration automatique du cache | ☐ |
+| 23 | Persistance des volumes | ☐ |
+| 24 | Tests automatisés du backend | ☐ |
+| 25 | Tests automatisés du frontend | ☐ |
+| 26 | Qualité du code | ☐ |
+| 27 | Panne de MongoDB | ☐ |
+| 28 | Panne de Milvus | ☐ |
+| 29 | Clés d'API absentes | ☐ |
 
 Pour arrêter le système en conservant les données :
 

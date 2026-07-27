@@ -41,6 +41,11 @@ export class AppComponent implements AfterViewInit {
   /** Section « détails techniques », repliée par défaut. */
   technicalOpen = false;
 
+  // Nombre de coups joués depuis la position de départ. Compté ici plutôt que
+  // lu sur le plateau : le bouton d'annulation est évalué dès le premier rendu,
+  // avant que la vue de l'échiquier ne soit disponible.
+  private movesPlayed = 0;
+
   // URL d'intégration de la vidéo active, calculée une seule fois. La conserver
   // ici est indispensable : appeler le sanitiseur depuis le template
   // renverrait un nouvel objet à chaque cycle de détection de changement, ce
@@ -62,12 +67,35 @@ export class AppComponent implements AfterViewInit {
 
   /** Déclenché à chaque coup joué sur l'échiquier. */
   onMove(event: { fen: string }): void {
+    this.movesPlayed += 1;
     this.runAnalysis(event.fen);
+  }
+
+  /** Vrai s'il reste au moins un coup à annuler. */
+  get canUndo(): boolean {
+    return this.movesPlayed > 0;
+  }
+
+  /**
+   * Annule le dernier coup joué.
+   *
+   * ``undo()`` modifie le plateau sans émettre d'événement de coup : c'est donc
+   * à nous de relancer l'analyse, faute de quoi les conseils, le trait et la
+   * vidéo resteraient ceux de la position abandonnée.
+   */
+  undo(): void {
+    if (!this.canUndo) {
+      return;
+    }
+    this.board.undo();
+    this.movesPlayed -= 1;
+    this.runAnalysis(this.board.getFEN());
   }
 
   /** Réinitialise l'échiquier à la position de départ et relance l'analyse. */
   reset(): void {
     this.board.reset();
+    this.movesPlayed = 0;
     this.runAnalysis(this.board.getFEN());
   }
 
