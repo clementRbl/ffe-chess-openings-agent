@@ -5,6 +5,11 @@
 }
 
 .app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
   padding: 1.25rem 2rem;
   background: #14213d;
   color: #fff;
@@ -18,6 +23,20 @@
     margin: 0.25rem 0 0;
     font-size: 0.85rem;
     opacity: 0.8;
+  }
+
+  .tour-button {
+    padding: 0.45rem 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 999px;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
   }
 }
 
@@ -49,33 +68,57 @@
       }
     }
   }
+}
 
-  .fen {
-    margin-top: 1rem;
-    max-width: 480px;
+// Infobulle légère, déclenchée au survol comme au focus clavier.
+[data-tip] {
+  position: relative;
 
-    .label {
-      display: block;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #6b7280;
-    }
+  &:hover::after,
+  &:focus-visible::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    z-index: 20;
+    width: max-content;
+    max-width: 280px;
+    padding: 0.5rem 0.65rem;
+    border-radius: 6px;
+    background: #1f2933;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1.35;
+    white-space: normal;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+  }
+}
 
-    code {
-      display: block;
-      word-break: break-all;
-      font-size: 0.8rem;
-      background: #f3f4f6;
-      padding: 0.5rem;
-      border-radius: 6px;
-    }
+// Marqueur « ? » ouvrant une infobulle explicative.
+.hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-left: 0.3rem;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #4b5563;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: help;
+
+  &:hover {
+    background: #d1d5db;
   }
 }
 
 .agent-panel {
-  flex: 1 1 360px;
+  flex: 1 1 420px;
   min-width: 320px;
+  max-width: 620px;
 
   h2 {
     margin-top: 0;
@@ -106,6 +149,7 @@
       border-radius: 999px;
       font-size: 0.75rem;
       font-weight: 600;
+      cursor: help;
 
       &.in-theory {
         background: #dcfce7;
@@ -132,28 +176,57 @@
     margin-bottom: 1rem;
 
     h3 {
+      display: flex;
+      align-items: center;
       margin: 0 0 0.6rem;
-      font-size: 0.95rem;
+      font-size: 0.98rem;
+    }
+
+    .source-tag {
+      margin-left: auto;
+      padding-left: 0.75rem;
+      color: #9ca3af;
+      font-size: 0.72rem;
+      font-weight: 400;
+      white-space: nowrap;
     }
 
     .muted {
       color: #6b7280;
       font-size: 0.85rem;
       margin: 0;
+      line-height: 1.45;
     }
   }
 
   .eval {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
     margin: 0;
 
     strong {
-      font-size: 1.2rem;
+      font-size: 1.35rem;
     }
 
-    .best {
-      margin-left: 0.75rem;
+    .eval-hint {
       color: #4b5563;
       font-size: 0.85rem;
+    }
+  }
+
+  .best {
+    display: flex;
+    align-items: center;
+    margin: 0.5rem 0 0;
+    color: #4b5563;
+    font-size: 0.82rem;
+
+    code {
+      margin-left: 0.3rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      background: #f3f4f6;
     }
   }
 
@@ -185,7 +258,7 @@
   .chunk {
     font-size: 0.85rem;
     margin: 0 0 0.6rem;
-    line-height: 1.4;
+    line-height: 1.45;
 
     .chunk-title {
       display: block;
@@ -194,11 +267,16 @@
     }
   }
 
-  .video-embed {
+  // --- Vidéos : vignettes cliquables, lecteur uniquement à la demande ---
+
+  .video-player {
+    margin-bottom: 0.85rem;
+  }
+
+  .video-frame {
     position: relative;
     padding-bottom: 56.25%;
     height: 0;
-    margin-bottom: 0.75rem;
 
     iframe {
       position: absolute;
@@ -210,29 +288,181 @@
     }
   }
 
+  .video-playing {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+
+    .playing-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .link {
+    flex: 0 0 auto;
+    border: none;
+    background: none;
+    padding: 0;
+    color: #1d4ed8;
+    font-size: 0.8rem;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
   .videos {
     list-style: none;
     margin: 0;
     padding: 0;
 
     li {
-      margin-bottom: 0.5rem;
-      font-size: 0.85rem;
+      margin-bottom: 0.6rem;
+    }
 
-      a {
-        color: #1d4ed8;
-        text-decoration: none;
+    .video-card {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      width: 100%;
+      padding: 0.35rem;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: none;
+      text-align: left;
+      cursor: pointer;
 
-        &:hover {
-          text-decoration: underline;
-        }
+      &:hover {
+        background: #f9fafb;
+        border-color: #e5e7eb;
+      }
+
+      &.active {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+      }
+    }
+
+    .thumb {
+      position: relative;
+      flex: 0 0 auto;
+      width: 96px;
+      height: 54px;
+      border-radius: 5px;
+      overflow: hidden;
+      background: #e5e7eb;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .play {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 0.9rem;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.18);
+      }
+    }
+
+    .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      overflow: hidden;
+
+      .title {
+        font-size: 0.84rem;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
 
       .channel {
-        display: block;
         color: #6b7280;
         font-size: 0.75rem;
       }
+    }
+
+    .external {
+      display: inline-block;
+      margin: 0.1rem 0 0 calc(96px + 1.05rem);
+      color: #6b7280;
+      font-size: 0.72rem;
+      text-decoration: none;
+
+      &:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  // --- Détails techniques, repliés par défaut ---
+
+  .technical {
+    margin-top: 0.5rem;
+
+    .technical-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0;
+      border: none;
+      background: none;
+      color: #6b7280;
+      font-size: 0.82rem;
+      cursor: pointer;
+
+      &:hover {
+        color: #1f2933;
+      }
+
+      .chevron {
+        display: inline-block;
+        transition: transform 0.15s ease;
+
+        &.open {
+          transform: rotate(90deg);
+        }
+      }
+    }
+
+    .technical-body {
+      padding: 0.75rem 0 0.25rem;
+    }
+
+    .explain {
+      margin: 0 0 0.5rem;
+      color: #4b5563;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    .fen {
+      display: block;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      border-radius: 6px;
+      background: #f3f4f6;
+      font-size: 0.78rem;
+      word-break: break-all;
     }
   }
 
@@ -240,11 +470,10 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-top: 0.5rem;
 
     .source {
-      font-size: 0.7rem;
-      padding: 0.15rem 0.5rem;
+      font-size: 0.72rem;
+      padding: 0.15rem 0.55rem;
       border-radius: 999px;
       background: #dcfce7;
       color: #166534;
@@ -252,6 +481,7 @@
       &.ko {
         background: #fee2e2;
         color: #991b1b;
+        cursor: help;
       }
     }
   }

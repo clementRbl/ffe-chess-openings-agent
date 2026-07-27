@@ -148,12 +148,16 @@ async def _videos(state: AgentState) -> AgentState:
 def _summarize(state: AgentState) -> AgentState:
     """Nœud : construit une recommandation lisible selon la source retenue."""
     if state.get("in_theory"):
-        opening = state.get("opening") or "cette ouverture"
+        opening = state.get("opening")
         top_moves = ", ".join(move.san for move in state["theoretical_moves"][:3])
-        summary = (
-            f"Position dans la théorie ({opening}). "
-            f"Coups principaux recommandés : {top_moves}."
+        # Lichess ne nomme pas toujours l'ouverture (la position de départ, par
+        # exemple) : on adapte la phrase plutôt que d'afficher un nom vide.
+        intro = (
+            f"Position dans la théorie ({opening})."
+            if opening
+            else "Position connue de la théorie."
         )
+        summary = f"{intro} Coups principaux recommandés : {top_moves}."
     else:
         evaluation = state.get("evaluation")
         best_move = evaluation.best_move if evaluation else None

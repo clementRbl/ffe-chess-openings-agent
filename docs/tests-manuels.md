@@ -215,13 +215,24 @@ Le deuxième cas est un échiquier vide : syntaxiquement correct, mais illégal
 
 ## 4. Tests de l'interface
 
-### 4.1 Test 12 — L'interface est servie
+### 4.1 Test 12 — L'interface est servie et la visite guidée démarre
 
-Ouvrir http://localhost:4200.
+Ouvrir http://localhost:4200 **dans une fenêtre de navigation privée** (la
+visite guidée ne se déclenche seule qu'au premier passage, l'information étant
+mémorisée dans le navigateur).
 
 **Attendu :** le titre « Agent IA — Ouvertures d'échecs », un échiquier en
-position de départ à gauche, le panneau « Recommandations de l'agent » à droite.
-L'analyse de la position initiale se déclenche automatiquement.
+position de départ à gauche, le panneau « Les conseils de l'assistant » à
+droite, et la **visite guidée** qui s'ouvre sur la première étape
+(« Ton échiquier »). La parcourir jusqu'au bout avec « Suivant ».
+
+> Le nombre d'étapes s'adapte à ce qui est affiché : sur la position de départ,
+> les cartes « Comprendre cette ouverture » et « Vidéos explicatives » sont
+> absentes, la visite compte donc 6 étapes au lieu de 8.
+
+Cliquer ensuite sur **Visite guidée** en haut à droite.
+
+**Attendu :** la visite se relance à la demande.
 
 ### 4.2 Test 13 — Synchronisation de la position
 
@@ -230,34 +241,55 @@ Jouer **1.e4** en glissant le pion, puis **1…c5** pour les Noirs.
 **Attendu à chaque coup :**
 
 1. la mention « Analyse de la position en cours… » apparaît brièvement ;
-2. la FEN affichée sous l'échiquier change et correspond à la position ;
-3. après 1…c5, le panneau affiche l'ouverture **Sicilian Defense**, les coups
-   théoriques recommandés, l'évaluation du moteur, un ou plusieurs passages
-   d'explication et des vidéos.
+2. après 1…c5, le panneau affiche l'ouverture **Sicilian Defense**, l'évaluation
+   du moteur avec sa traduction en clair (« La position est équilibrée. »), les
+   coups joués par les maîtres avec leur nombre de parties, des explications sur
+   l'ouverture et cinq vignettes vidéo ;
+3. déplier « Détails techniques » : la FEN affichée correspond à la position.
 
-### 4.3 Test 14 — Lecture d'une vidéo
+### 4.3 Test 14 — Les infobulles expliquent le vocabulaire
 
-Cliquer sur une vidéo du panneau.
+Survoler les marqueurs `?` des cartes, ainsi que le badge « Dans la théorie ».
 
-**Attendu :** la vidéo se lit directement dans la page (lecteur intégré), sans
-quitter l'application.
+**Attendu :** une infobulle explique en langage courant l'évaluation du moteur,
+la notation UCI du coup suggéré, l'origine des coups de maîtres et le sens de
+« dans la théorie ».
 
-### 4.4 Test 15 — Position hors théorie depuis l'interface
+### 4.4 Test 15 — Les vidéos ne se chargent qu'à la demande
 
-Réinitialiser l'échiquier, puis jouer **1.f3 e5 2.g4**.
+**Attendu avant tout clic :** aucune vidéo n'est lancée, seules cinq vignettes
+sont proposées sous la mention « Choisis une vidéo pour la regarder ici — rien
+ne se charge avant ton clic ».
+
+Cliquer sur une vignette.
+
+**Attendu :** le lecteur apparaît au-dessus de la liste et la vidéo se lit dans
+la page. Le bouton « Fermer la vidéo » la retire.
+
+### 4.5 Test 16 — La vidéo ne redémarre pas toute seule
+
+Lancer une vidéo, la laisser tourner quelques secondes, puis **cliquer plusieurs
+fois n'importe où dans la page** (sur un titre, dans le vide, sur une infobulle).
+
+**Attendu :** la lecture se poursuit sans jamais repartir du début.
+
+Jouer ensuite un coup sur l'échiquier.
+
+**Attendu :** si la même vidéo est encore proposée pour la nouvelle position, la
+lecture continue sans coupure ; sinon le lecteur se ferme et la nouvelle liste
+de vignettes s'affiche.
+
+### 4.6 Test 17 — Position hors théorie depuis l'interface
+
+Cliquer sur « Réinitialiser la partie », puis jouer **1.f3 e5 2.g4**.
 
 **Attendu :** le panneau bascule sur le discours moteur — la position est
-signalée hors théorie et Stockfish annonce le mat par Dh4#. Aucun contexte ni
-vidéo n'est proposé.
+signalée hors théorie, l'évaluation annonce « Mat en 1 » et le coup suggéré est
+`d8h4`. Les cartes « Comprendre cette ouverture » et « Vidéos explicatives »
+disparaissent, et la carte des coups de maîtres invite à s'appuyer sur le
+moteur.
 
-### 4.5 Test 16 — Bouton de réinitialisation
-
-Cliquer sur « Réinitialiser ».
-
-**Attendu :** l'échiquier revient en position de départ, la FEN affichée
-redevient celle de départ et une nouvelle analyse est lancée.
-
-### 4.6 Test 17 — Les appels passent bien par le proxy
+### 4.7 Test 18 — Les appels passent bien par le proxy
 
 ```bash
 curl http://localhost:4200/api/v1/healthcheck
@@ -271,7 +303,7 @@ problème de CORS.
 
 ## 5. Tests du cache et de l'historique (MongoDB)
 
-### 5.1 Test 18 — Les analyses sont historisées
+### 5.1 Test 19 — Les analyses sont historisées
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet \
@@ -282,7 +314,7 @@ docker compose exec mongo mongosh ffe_chess --quiet \
 `in_theory`, `theoretical_moves`, `evaluation`, `summary` et `created_at`. Les
 positions jouées au § 4 doivent y figurer.
 
-### 5.2 Test 19 — Les appels externes sont mis en cache
+### 5.2 Test 20 — Les appels externes sont mis en cache
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet --eval "db.api_cache.countDocuments()"
@@ -298,7 +330,7 @@ appel n'a été consommé sur le quota YouTube.
 > délai vient de Stockfish et du calcul d'embedding, qui ne sont pas mis en
 > cache. Le cache protège les quotas, pas la latence.
 
-### 5.3 Test 20 — L'expiration automatique est configurée
+### 5.3 Test 21 — L'expiration automatique est configurée
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet \
@@ -312,7 +344,7 @@ C'est lui qui fait purger par MongoDB les entrées de plus de 24 heures.
 
 ## 6. Test de persistance
 
-### Test 21 — Les données survivent à la recréation des conteneurs
+### Test 22 — Les données survivent à la recréation des conteneurs
 
 ```bash
 # 1. Relever les compteurs
@@ -346,7 +378,7 @@ docker volume ls | grep echecs
 
 ## 7. Tests automatisés
 
-### Test 22 — Suite de tests du backend
+### Test 23 — Suite de tests du backend
 
 ```bash
 cd backend && uv run pytest
@@ -357,7 +389,17 @@ cd backend && uv run pytest
 validation FEN, l'aiguillage du graphe, la dégradation gracieuse, le cache et le
 contrat HTTP.
 
-### Test 23 — Qualité du code
+### Test 24 — Suite de tests du frontend
+
+```bash
+cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
+```
+
+**Attendu :** 10 tests passent. Ils couvrent le lecteur vidéo (ouverture à la
+demande, stabilité de l'URL d'intégration, fermeture) et la mise en forme de
+l'évaluation du moteur.
+
+### Test 25 — Qualité du code
 
 ```bash
 cd backend && uv run ruff check . && uv run ruff format --check app tests
@@ -373,7 +415,7 @@ Ces tests vérifient la promesse centrale de l'architecture : **la panne d'une
 source ne doit jamais interrompre l'analyse**. Ils se lisent dans le champ
 `sources` de la réponse.
 
-### 8.1 Test 24 — Panne de MongoDB
+### 8.1 Test 26 — Panne de MongoDB
 
 ```bash
 docker compose stop mongo
@@ -387,7 +429,7 @@ vidéos), et seul `sources.mongo` passe à `"ok": false` avec un message
 d'explication. Le cache et l'historique sont perdus le temps de la panne, rien
 d'autre.
 
-### 8.2 Test 25 — Panne de Milvus
+### 8.2 Test 27 — Panne de Milvus
 
 ```bash
 docker compose stop milvus
@@ -402,7 +444,7 @@ les coups théoriques, l'évaluation et les vidéos sont bien là.
 > Après redémarrage, laisser à Milvus jusqu'à 90 secondes pour redevenir
 > `healthy` avant de rejouer un test.
 
-### 8.3 Test 26 — Clés d'API absentes
+### 8.3 Test 28 — Clés d'API absentes
 
 Plutôt que de modifier `.env`, lancer un backend jetable sans clés sur le port
 8001 — la démonstration reste ainsi utilisable pendant le test :
@@ -498,21 +540,23 @@ docker compose logs -f backend      # en continu
 | 9 | Analyse complète, cinq sources | ☐ |
 | 10 | Analyse hors théorie | ☐ |
 | 11 | Rejet des positions invalides | ☐ |
-| 12 | Interface servie | ☐ |
+| 12 | Interface servie et visite guidée | ☐ |
 | 13 | Synchronisation de la position | ☐ |
-| 14 | Lecture d'une vidéo | ☐ |
-| 15 | Position hors théorie depuis l'interface | ☐ |
-| 16 | Réinitialisation de l'échiquier | ☐ |
-| 17 | Proxy nginx | ☐ |
-| 18 | Historique des analyses | ☐ |
-| 19 | Mise en cache des appels externes | ☐ |
-| 20 | Expiration automatique du cache | ☐ |
-| 21 | Persistance des volumes | ☐ |
-| 22 | Suite de tests automatisés | ☐ |
-| 23 | Qualité du code | ☐ |
-| 24 | Panne de MongoDB | ☐ |
-| 25 | Panne de Milvus | ☐ |
-| 26 | Clés d'API absentes | ☐ |
+| 14 | Infobulles du vocabulaire | ☐ |
+| 15 | Vidéos chargées à la demande | ☐ |
+| 16 | La vidéo ne redémarre pas seule | ☐ |
+| 17 | Position hors théorie depuis l'interface | ☐ |
+| 18 | Proxy nginx | ☐ |
+| 19 | Historique des analyses | ☐ |
+| 20 | Mise en cache des appels externes | ☐ |
+| 21 | Expiration automatique du cache | ☐ |
+| 22 | Persistance des volumes | ☐ |
+| 23 | Tests automatisés du backend | ☐ |
+| 24 | Tests automatisés du frontend | ☐ |
+| 25 | Qualité du code | ☐ |
+| 26 | Panne de MongoDB | ☐ |
+| 27 | Panne de Milvus | ☐ |
+| 28 | Clés d'API absentes | ☐ |
 
 Pour arrêter le système en conservant les données :
 

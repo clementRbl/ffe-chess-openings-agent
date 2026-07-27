@@ -36,9 +36,9 @@ Le tout est orchestré par un agent **LangGraph** et exposé via une API
 │   ├── data/wikichess/     # Corpus d'articles d'ouvertures
 │   └── tests/              # Tests pytest (sans service externe)
 ├── frontend/               # Interface Angular (échiquier + panneau agent)
-│   ├── src/app/            # Composant racine, service d'appel à l'API
+│   ├── src/app/            # Composant racine, services (API, visite guidée)
 │   └── projects/           # Librairie ngx-chess-board (source locale, cf. note)
-├── docs/                   # Livrables documentaires (note MCP, autoévaluation)
+├── docs/                   # Livrables documentaires (note MCP, procédure de test)
 ├── docker-compose.yml      # Orchestration de tous les services
 ├── .env.example            # Modèle de configuration
 └── CONSIGNES.md            # Document de référence de la mission
@@ -150,6 +150,26 @@ docker compose down && docker compose up -d
 docker compose exec mongo mongosh ffe_chess --quiet --eval "db.analyses.countDocuments()"
 curl "http://localhost:8000/api/v1/vector-search?query=sicilienne&top_k=1"
 ```
+
+## L'interface
+
+L'interface s'adresse à de jeunes joueurs : le vocabulaire technique y est
+expliqué plutôt qu'affiché brut.
+
+- **Visite guidée** au premier lancement (relançable par le bouton en haut à
+  droite) : elle présente l'échiquier puis chaque carte de recommandation. Les
+  étapes s'adaptent au contenu affiché.
+- **Infobulles** sur les termes qui ne parlent pas d'eux-mêmes : « dans la
+  théorie », l'évaluation du moteur, la notation UCI d'un coup, l'origine des
+  coups de maîtres.
+- **Titres en langage courant**, la source restant indiquée discrètement :
+  « Qui est mieux ? » (moteur Stockfish), « Ce que jouent les maîtres » (base
+  Lichess), « Comprendre cette ouverture » (fiches Wikichess).
+- **Vidéos en vignettes** : rien n'est chargé tant que l'utilisateur n'a pas
+  cliqué. Cela évite une lecture imposée et ménage le quota YouTube.
+- **Détails techniques repliés** : la notation FEN de la position (avec son
+  explication) et l'état des services consultés, pour qui veut regarder sous le
+  capot.
 
 ## Endpoints de l'API
 
@@ -276,7 +296,7 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 | Document | Objet |
 |----------|-------|
 | [docs/note-analyse-video-mcp.md](docs/note-analyse-video-mcp.md) | Note sur le système avancé d'analyse vidéo : bénéfices, limites, architecture MCP, étude de faisabilité (coûts build + opex), alternatives et roadmap |
-| [docs/tests-manuels.md](docs/tests-manuels.md) | Procédure de test manuel de bout en bout : 26 tests couvrant les services, l'API, l'interface, la persistance et la résistance aux pannes |
+| [docs/tests-manuels.md](docs/tests-manuels.md) | Procédure de test manuel de bout en bout : 28 tests couvrant les services, l'API, l'interface, la persistance et la résistance aux pannes |
 
 ## Avancement (étapes de la mission)
 

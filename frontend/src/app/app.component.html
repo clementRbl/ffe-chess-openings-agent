@@ -1,6 +1,16 @@
 <header class="app-header">
-  <h1>Agent IA — Ouvertures d'échecs</h1>
-  <p class="subtitle">Fédération Française des Échecs · Assistant d'apprentissage</p>
+  <div>
+    <h1>Agent IA — Ouvertures d'échecs</h1>
+    <p class="subtitle">Fédération Française des Échecs · Assistant d'apprentissage</p>
+  </div>
+  <button
+    type="button"
+    class="tour-button"
+    data-tour="replay"
+    (click)="startTour()"
+  >
+    Visite guidée
+  </button>
 </header>
 
 <main class="layout">
@@ -13,18 +23,13 @@
     ></ngx-chess-board>
 
     <div class="board-actions">
-      <button type="button" (click)="reset()">Réinitialiser</button>
+      <button type="button" (click)="reset()">Réinitialiser la partie</button>
     </div>
-
-    <p class="fen">
-      <span class="label">FEN</span>
-      <code>{{ currentFen }}</code>
-    </p>
   </section>
 
   <!-- Colonne droite : recommandations de l'agent -->
   <section class="agent-panel">
-    <h2>Recommandations de l'agent</h2>
+    <h2>Les conseils de l'assistant</h2>
 
     @if (loading) {
       <p class="status loading">Analyse de la position en cours…</p>
@@ -35,11 +40,16 @@
     }
 
     @if (analysis && !loading) {
-      <div class="summary">
+      <div class="summary" data-tour="verdict">
         <span
           class="badge"
           [class.in-theory]="analysis.in_theory"
           [class.out-theory]="!analysis.in_theory"
+          [attr.data-tip]="
+            analysis.in_theory
+              ? 'Cette position est connue et étudiée : de nombreux joueurs sont déjà passés par là.'
+              : 'Cette position sort des sentiers battus : aucune partie de référence ne la recense.'
+          "
         >
           {{ analysis.in_theory ? 'Dans la théorie' : 'Hors théorie' }}
         </span>
@@ -50,41 +60,72 @@
       </div>
 
       <!-- Évaluation moteur (Stockfish) -->
-      <div class="card">
-        <h3>Évaluation (Stockfish)</h3>
+      <div class="card" data-tour="evaluation">
+        <h3>
+          Qui est mieux ?
+          <span
+            class="hint"
+            data-tip="Un moteur d'échecs calcule l'avantage en équivalent pions : positif pour les Blancs, négatif pour les Noirs."
+            >?</span
+          >
+          <span class="source-tag">moteur Stockfish</span>
+        </h3>
         @if (analysis.evaluation) {
           <p class="eval">
             <strong>{{ evaluationText }}</strong>
-            @if (analysis.evaluation.best_move) {
-              <span class="best">meilleur coup : {{ analysis.evaluation.best_move }}</span>
-            }
+            <span class="eval-hint">{{ evaluationHint }}</span>
           </p>
+          @if (analysis.evaluation.best_move) {
+            <p class="best">
+              Coup suggéré par le moteur :
+              <code>{{ analysis.evaluation.best_move }}</code>
+              <span
+                class="hint"
+                data-tip="Notation UCI : la case de départ suivie de la case d'arrivée. « e2e4 » signifie « la pièce en e2 va en e4 »."
+                >?</span
+              >
+            </p>
+          }
         } @else {
-          <p class="muted">Indisponible.</p>
+          <p class="muted">Évaluation indisponible pour cette position.</p>
         }
       </div>
 
       <!-- Coups théoriques (Lichess) -->
-      <div class="card">
-        <h3>Coups théoriques (Lichess)</h3>
+      <div class="card" data-tour="moves">
+        <h3>
+          Ce que jouent les maîtres
+          <span
+            class="hint"
+            data-tip="Les coups les plus fréquents dans les parties de haut niveau depuis ta position. Plus le nombre de parties est élevé, plus le coup est éprouvé."
+            >?</span
+          >
+          <span class="source-tag">base Lichess</span>
+        </h3>
         @if (analysis.theoretical_moves.length) {
           <ul class="moves">
             @for (move of analysis.theoretical_moves.slice(0, 6); track move.uci) {
               <li>
                 <span class="san">{{ move.san }}</span>
-                <span class="stats">{{ move.total }} parties</span>
+                <span class="stats">{{ formatGames(move.total) }} parties</span>
               </li>
             }
           </ul>
         } @else {
-          <p class="muted">Aucun coup théorique pour cette position.</p>
+          <p class="muted">
+            Aucun coup de référence ici : tu es sorti de la théorie connue.
+            Appuie-toi sur l'évaluation du moteur ci-dessus.
+          </p>
         }
       </div>
 
       <!-- Contexte de l'ouverture (RAG Milvus / Wikichess) -->
       @if (analysis.context.length) {
-        <div class="card">
-          <h3>Contexte de l'ouverture</h3>
+        <div class="card" data-tour="context">
+          <h3>
+            Comprendre cette ouverture
+            <span class="source-tag">fiches Wikichess</span>
+          </h3>
           @for (chunk of analysis.context; track $index) {
             <p class="chunk">
               @if (chunk.title) {
@@ -98,39 +139,104 @@
 
       <!-- Vidéos explicatives (YouTube) -->
       @if (analysis.videos.length) {
-        <div class="card">
-          <h3>Vidéos explicatives</h3>
-          <div class="video-embed">
-            <iframe
-              [src]="embedUrl(analysis.videos[0].embed_url)"
-              title="Vidéo explicative"
-              frameborder="0"
-              allowfullscreen
-            ></iframe>
-          </div>
+        <div class="card" data-tour="videos">
+          <h3>
+            Vidéos explicatives
+            <span class="source-tag">YouTube</span>
+          </h3>
+
+          @if (activeVideo) {
+            <div class="video-player">
+              <div class="video-frame">
+                <iframe
+                  [src]="videoUrl"
+                  [title]="activeVideo.title"
+                  frameborder="0"
+                  allow="accelerometer; encrypted-media; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              </div>
+              <div class="video-playing">
+                <span class="playing-title">{{ activeVideo.title }}</span>
+                <button type="button" class="link" (click)="closeVideo()">
+                  Fermer la vidéo
+                </button>
+              </div>
+            </div>
+          } @else {
+            <p class="muted">
+              Choisis une vidéo pour la regarder ici — rien ne se charge avant
+              ton clic.
+            </p>
+          }
+
           <ul class="videos">
             @for (video of analysis.videos; track video.video_id) {
               <li>
-                <a [href]="video.url" target="_blank" rel="noopener">
-                  {{ video.title }}
+                <button
+                  type="button"
+                  class="video-card"
+                  [class.active]="activeVideo?.video_id === video.video_id"
+                  (click)="playVideo(video)"
+                >
+                  <span class="thumb">
+                    @if (video.thumbnail) {
+                      <img [src]="video.thumbnail" [alt]="video.title" />
+                    }
+                    <span class="play" aria-hidden="true">▶</span>
+                  </span>
+                  <span class="meta">
+                    <span class="title">{{ video.title }}</span>
+                    <span class="channel">{{ video.channel }}</span>
+                  </span>
+                </button>
+                <a class="external" [href]="video.url" target="_blank" rel="noopener">
+                  Ouvrir sur YouTube
                 </a>
-                <span class="channel">{{ video.channel }}</span>
               </li>
             }
           </ul>
         </div>
       }
 
-      <!-- État des sources consultées par l'agent -->
-      <div class="sources">
-        @for (source of analysis.sources | keyvalue; track source.key) {
-          <span
-            class="source"
-            [class.ko]="!source.value.ok"
-            [title]="source.value.detail ?? ''"
-          >
-            {{ source.key }}: {{ source.value.ok ? 'ok' : 'indisponible' }}
-          </span>
+      <!-- Détails techniques : position FEN et état des services -->
+      <div class="technical" data-tour="technical">
+        <button
+          type="button"
+          class="technical-toggle"
+          [attr.aria-expanded]="technicalOpen"
+          (click)="toggleTechnical()"
+        >
+          <span class="chevron" [class.open]="technicalOpen" aria-hidden="true">▸</span>
+          Détails techniques
+        </button>
+
+        @if (technicalOpen) {
+          <div class="technical-body">
+            <p class="explain">
+              La <strong>notation FEN</strong> est la « photo » de ta position :
+              une ligne de texte qui décrit où se trouve chaque pièce, à qui est
+              le trait et quels roques restent possibles. C'est le langage
+              compris par les moteurs et les bases de parties.
+            </p>
+            <code class="fen">{{ currentFen }}</code>
+
+            <p class="explain">
+              Services interrogés par l'assistant pour cette position :
+            </p>
+            <div class="sources">
+              @for (source of analysis.sources | keyvalue; track source.key) {
+                <span
+                  class="source"
+                  [class.ko]="!source.value.ok"
+                  [attr.data-tip]="source.value.detail ?? ''"
+                >
+                  {{ source.key }} :
+                  {{ source.value.ok ? 'disponible' : 'indisponible' }}
+                </span>
+              }
+            </div>
+          </div>
         }
       </div>
     }

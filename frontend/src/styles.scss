@@ -1,4 +1,8 @@
 /* Styles globaux de l'application. */
+
+/* Habillage de la visite guidée (driver.js). */
+@import 'driver.js/dist/driver.css';
+
 * {
   box-sizing: border-box;
 }

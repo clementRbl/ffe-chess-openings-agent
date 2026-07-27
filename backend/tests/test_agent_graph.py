@@ -36,6 +36,10 @@ async def test_position_in_theory_without_opening_name_is_not_enriched(agent_env
     assert agent_env["youtube"].calls == 0
     assert "milvus" not in state["sources"]
     assert state["sources"]["lichess"].ok
+    # Le résumé ne doit pas laisser apparaître un nom d'ouverture vide.
+    assert state["summary"] == (
+        "Position connue de la théorie. Coups principaux recommandés : e4."
+    )
 
 
 async def test_unknown_position_falls_back_to_the_engine(agent_env):
