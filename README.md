@@ -121,7 +121,8 @@ rapide de repérer une clé d'API manquante ou un service non démarré.
 
 ### Persistance des données
 
-Quatre volumes nommés conservent les données entre deux redémarrages :
+Cinq volumes nommés conservent les données entre deux redémarrages (données
+MongoDB et Milvus, métadonnées etcd et MinIO, cache du modèle d'embedding) :
 
 ```bash
 docker volume ls | grep echecs   # mongo_data, milvus_data, etcd_data, minio_data, hf_cache
@@ -257,6 +258,12 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 > « YouTube Data API v3 ») et renseignez `YOUTUBE_API_KEY` dans `.env`. Sans
 > clé, `/api/v1/videos/{opening}` renvoie une erreur `503` explicite.
 
+## Livrables documentaires
+
+| Document | Objet |
+|----------|-------|
+| [docs/note-analyse-video-mcp.md](docs/note-analyse-video-mcp.md) | Note sur le système avancé d'analyse vidéo : bénéfices, limites, architecture MCP, étude de faisabilité (coûts build + opex), alternatives et roadmap |
+
 ## Avancement (étapes de la mission)
 
 - [x] **Étape 1** – Structure du projet, dépôt Git, `docker-compose` (healthcheck FastAPI)
@@ -265,4 +272,4 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 - [x] **Étape 4** – Recherche de vidéos YouTube (API Data v3) orchestrée par LangGraph
 - [x] **Étape 5** – Interface Angular (ngx-chess-board) + agent d'orchestration (`/analyze`)
 - [x] **Étape 6** – Containerisation complète (6 services, volumes persistants) + démonstration
-- [ ] **Étape 7** – Note système d'analyse vidéo (MCP) : bénéfices, limites, faisabilité
+- [x] **Étape 7** – Note système d'analyse vidéo (MCP) : bénéfices, limites, faisabilité
