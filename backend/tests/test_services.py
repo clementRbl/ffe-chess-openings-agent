@@ -93,6 +93,30 @@ def test_youtube_titles_have_their_html_entities_decoded():
     assert videos[0].channel == "Chess & Co"
 
 
+@pytest.mark.parametrize(
+    ("english", "french"),
+    [
+        ("Nf3", "Cf3"),
+        ("Bxc6+", "Fxc6+"),
+        ("Qh4#", "Dh4#"),
+        ("Rad1", "Tad1"),
+        ("Kg1", "Rg1"),
+        ("e8=Q", "e8=D"),
+        # Un coup de pion n'a pas d'initiale de pièce.
+        ("c5", "c5"),
+        # « b » minuscule est la colonne b, pas le fou.
+        ("bxc6", "bxc6"),
+        # Les roques s'écrivent de la même façon en français.
+        ("O-O-O", "O-O-O"),
+    ],
+)
+def test_moves_are_translated_to_french_notation(english, french):
+    """Les coups de Lichess sont traduits pour un public francophone."""
+    from app.services.notation import to_french_san
+
+    assert to_french_san(english) == french
+
+
 class FakeStockfish:
     """Moteur simulé renvoyant une évaluation fixe, du point de vue du trait."""
 

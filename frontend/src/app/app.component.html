@@ -119,10 +119,10 @@
             @if (analysis.evaluation.best_move) {
               <p class="best">
                 Coup suggéré :
-                <code>{{ analysis.evaluation.best_move }}</code>
+                <code>{{ bestMoveText }}</code>
                 <span
                   class="hint"
-                  data-tip="Notation UCI : la case de départ suivie de la case d'arrivée. « e2e4 » signifie « la pièce en e2 va en e4 »."
+                  data-tip="Le moteur indique la case de départ et la case d'arrivée : « g1 → f3 » signifie « la pièce posée en g1 va en f3 »."
                   >?</span
                 >
               </p>
@@ -137,7 +137,7 @@
             Ce que jouent les maîtres
             <span
               class="hint"
-              data-tip="Les coups les plus fréquents dans les parties de haut niveau depuis ta position. Plus le nombre de parties est élevé, plus le coup est éprouvé."
+              data-tip="Les coups les plus fréquents dans les parties de haut niveau depuis ta position. La lettre désigne la pièce (C cavalier, F fou, T tour, D dame, R roi) ; sans lettre, c'est un pion."
               >?</span
             >
             <span class="source-tag">base Lichess</span>
@@ -146,7 +146,7 @@
             <ol class="moves">
               @for (move of analysis.theoretical_moves.slice(0, 5); track move.uci) {
                 <li>
-                  <span class="san">{{ move.san }}</span>
+                  <span class="san">{{ frenchMove(move.san) }}</span>
                   <span class="stats">{{ formatGames(move.total) }} parties</span>
                 </li>
               }

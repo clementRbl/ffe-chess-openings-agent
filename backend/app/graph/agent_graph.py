@@ -32,6 +32,7 @@ from app.services.embeddings import embedding_service
 from app.services.lichess import LichessError, lichess_service
 from app.services.milvus_client import MilvusError, milvus_repository
 from app.services.mongo import MongoError, mongo_repository
+from app.services.notation import to_french_san
 from app.services.stockfish_engine import StockfishError, stockfish_service
 from app.services.youtube import YouTubeError, youtube_service
 
@@ -149,7 +150,9 @@ def _summarize(state: AgentState) -> AgentState:
     """Nœud : construit une recommandation lisible selon la source retenue."""
     if state.get("in_theory"):
         opening = state.get("opening")
-        top_moves = ", ".join(move.san for move in state["theoretical_moves"][:3])
+        top_moves = ", ".join(
+            to_french_san(move.san) for move in state["theoretical_moves"][:3]
+        )
         # Lichess ne nomme pas toujours l'ouverture (la position de départ, par
         # exemple) : on adapte la phrase plutôt que d'afficher un nom vide.
         intro = (
@@ -162,9 +165,12 @@ def _summarize(state: AgentState) -> AgentState:
         evaluation = state.get("evaluation")
         best_move = evaluation.best_move if evaluation else None
         if best_move:
+            # Le moteur s'exprime en notation UCI (case de départ, case
+            # d'arrivée) : on l'écrit explicitement plutôt que de laisser
+            # « g1f3 » brut au lecteur.
             summary = (
                 "Position hors théorie : suivez l'évaluation du moteur. "
-                f"Coup suggéré par Stockfish : {best_move}."
+                f"Coup suggéré : {best_move[:2]} vers {best_move[2:4]}."
             )
         else:
             summary = "Position hors théorie."

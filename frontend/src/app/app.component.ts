@@ -6,6 +6,7 @@ import { NgxChessBoardModule, NgxChessBoardView } from 'ngx-chess-board';
 import { AgentService } from './services/agent.service';
 import { TourService } from './services/tour.service';
 import { AgentAnalysis, VideoResult } from './models/agent.models';
+import { formatUciMove, toFrenchSan } from './chess-notation';
 
 // Position de départ standard au format FEN.
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -202,6 +203,17 @@ export class AppComponent implements AfterViewInit {
   /** Nombre de parties de référence, formaté pour la lecture. */
   formatGames(total: number): string {
     return total.toLocaleString('fr-FR');
+  }
+
+  /** Coup de Lichess traduit en notation française (« Nf3 » → « Cf3 »). */
+  frenchMove(san: string): string {
+    return toFrenchSan(san);
+  }
+
+  /** Coup du moteur, exprimé en cases de départ et d'arrivée. */
+  get bestMoveText(): string {
+    const bestMove = this.analysis?.evaluation?.best_move;
+    return bestMove ? formatUciMove(bestMove) : '';
   }
 
   /** Appelle l'agent pour analyser la position et met à jour l'affichage. */

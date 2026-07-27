@@ -55,7 +55,8 @@ async def test_unknown_position_falls_back_to_the_engine(agent_env):
     assert "context" not in state
     assert "videos" not in state
     assert agent_env["youtube"].calls == 0
-    assert "e2e4" in state["summary"]
+    # Le coup du moteur est explicité plutôt que laissé en notation UCI brute.
+    assert "e2 vers e4" in state["summary"]
 
 
 async def test_evaluation_is_always_present(agent_env):

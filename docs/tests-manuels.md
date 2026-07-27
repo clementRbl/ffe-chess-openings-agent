@@ -255,6 +255,12 @@ Jouer **1.e4** en glissant le pion, puis **1…c5** pour les Noirs.
    « Vidéos sur Sicilian Defense » ;
 4. déplier « Détails techniques » : la FEN affichée correspond à la position.
 
+> **Notation.** L'interface affiche les coups en notation **française** (`Cf3`
+> le cavalier, `Fc4` le fou, `Td1` la tour, `Dh5` la dame, `Rg1` le roi), et le
+> coup du moteur sous la forme « case de départ → case d'arrivée ». L'API, elle,
+> conserve la notation anglaise standard de Lichess (`Nf3`) et la notation UCI
+> (`g1f3`) : la traduction est faite à l'affichage.
+
 ### 4.3 Test 14 — Annuler un coup resynchronise tout l'écran
 
 Après 1.e4 c5, cliquer sur **Annuler le coup**.
