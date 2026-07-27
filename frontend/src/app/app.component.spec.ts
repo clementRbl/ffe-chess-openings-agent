@@ -4,6 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { AppComponent } from './app.component';
 import { VideoResult } from './models/agent.models';
+import { buildArrows } from './board-arrows';
 
 // Deux vidéos factices, suffisantes pour les cas testés ici.
 const VIDEO_A: VideoResult = {
@@ -151,6 +152,53 @@ describe('AppComponent — annulation des coups', () => {
   });
 });
 
+describe('AppComponent — flèches sur le plateau', () => {
+  let component: AppComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [AppComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+
+    component = TestBed.createComponent(AppComponent).componentInstance;
+    component.arrows = buildArrows(
+      [{ uci: 'g1f3' }, { uci: 'b1c3' }, { uci: 'c2c3' }],
+      'd2d4',
+    );
+  });
+
+  it('met en avant le coup le plus joué et celui du moteur au repos', () => {
+    const states = component.arrows.map((arrow) => component.arrowState(arrow));
+
+    expect(states).toEqual(['primary', 'secondary', 'secondary', 'primary']);
+  });
+
+  // Régression : la règle d'opacité des rangs suivants l'emportait sur celle de
+  // l'estompage, si bien que le survol ne mettait rien en avant.
+  it('isole la flèche survolée et efface toutes les autres', () => {
+    component.highlight(2);
+
+    const states = component.arrows.map((arrow) => component.arrowState(arrow));
+
+    expect(states).toEqual(['dimmed', 'pinned', 'dimmed', 'dimmed']);
+  });
+
+  it('ignore le survol d’un coup qui n’a pas de flèche', () => {
+    component.highlight(5);
+
+    expect(component.highlightedRank).toBeNull();
+  });
+
+  it('coupe l’affichage et relâche la mise en avant', () => {
+    component.highlight(1);
+    component.toggleArrows();
+
+    expect(component.showArrows).toBeFalse();
+    expect(component.highlightedRank).toBeNull();
+  });
+});
+
 describe('AppComponent — lisibilité des recommandations', () => {
   let component: AppComponent;
 
@@ -177,12 +225,17 @@ describe('AppComponent — lisibilité des recommandations', () => {
     };
   }
 
-  it('exprime l’évaluation en pions, signe compris', () => {
+  it('exprime l’évaluation en pions, signe compris et virgule française', () => {
     withEvaluation('cp', 36);
-    expect(component.evaluationText).toBe('+0.36');
+    expect(component.evaluationText).toBe('+0,36');
 
     withEvaluation('cp', -120);
-    expect(component.evaluationText).toBe('-1.20');
+    expect(component.evaluationText).toBe('-1,20');
+  });
+
+  it('n’affiche pas de signe sur une position strictement égale', () => {
+    withEvaluation('cp', 0);
+    expect(component.evaluationText).toBe('0,00');
   });
 
   it('annonce un mat sans signe négatif', () => {
@@ -192,13 +245,38 @@ describe('AppComponent — lisibilité des recommandations', () => {
 
   it('traduit l’évaluation en langage courant', () => {
     withEvaluation('cp', 20);
-    expect(component.evaluationHint).toBe('La position est équilibrée.');
+    expect(component.evaluationHint).toBe(
+      'Écart trop faible pour départager les deux camps.',
+    );
 
     withEvaluation('cp', 90);
     expect(component.evaluationHint).toBe('Léger avantage pour les Blancs.');
 
     withEvaluation('cp', -400);
     expect(component.evaluationHint).toBe('Position gagnante pour les Noirs.');
+  });
+
+  // Le signe seul ne dit pas à un débutant qui mène : la carte nomme le camp.
+  it('nomme le camp avantagé, et personne sous un demi-pion', () => {
+    withEvaluation('cp', 31);
+    expect(component.evaluationLeader).toBe('balanced');
+    expect(component.evaluationLeaderLabel).toBe('Équilibre');
+
+    withEvaluation('cp', 120);
+    expect(component.evaluationLeader).toBe('white');
+    expect(component.evaluationLeaderLabel).toBe('Blancs');
+
+    withEvaluation('cp', -50);
+    expect(component.evaluationLeader).toBe('black');
+    expect(component.evaluationLeaderLabel).toBe('Noirs');
+  });
+
+  it('désigne le camp qui mate, quelle que soit la distance au mat', () => {
+    withEvaluation('mate', 2);
+    expect(component.evaluationLeader).toBe('white');
+
+    withEvaluation('mate', -2);
+    expect(component.evaluationLeader).toBe('black');
   });
 
   it('affiche un tiret quand l’évaluation est indisponible', () => {

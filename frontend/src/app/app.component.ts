@@ -7,9 +7,15 @@ import { AgentService } from './services/agent.service';
 import { TourService } from './services/tour.service';
 import { AgentAnalysis, VideoResult } from './models/agent.models';
 import { formatUciMove, toFrenchSan } from './chess-notation';
+import { buildArrows, MoveArrow } from './board-arrows';
 
 // Position de départ standard au format FEN.
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+// Écart, en pions, en deçà duquel la position est tenue pour équilibrée. Un
+// demi-pion est la convention usuelle : en dessous, l'avantage annoncé par le
+// moteur ne se traduit par aucun plan concret sur l'échiquier.
+const BALANCE_THRESHOLD = 0.5;
 
 // Composant racine : affiche l'échiquier interactif et le panneau de
 // recommandations de l'agent. À chaque coup joué, la position (FEN) est
@@ -41,6 +47,16 @@ export class AppComponent implements AfterViewInit {
   activeVideo: VideoResult | null = null;
   /** Section « détails techniques », repliée par défaut. */
   technicalOpen = false;
+  /** Affichage des flèches de recommandation sur le plateau. */
+  showArrows = true;
+  /** Rang de la flèche mise en avant au survol de la liste, ou ``null``. */
+  highlightedRank: number | null = null;
+
+  // Flèches superposées au plateau. Calculées à l'arrivée de l'analyse plutôt
+  // que lues depuis un accesseur : le template les parcourt à chaque cycle de
+  // détection de changement, et il serait inutile de retracer les mêmes
+  // chemins à chaque fois.
+  arrows: MoveArrow[] = [];
 
   // Nombre de coups joués depuis la position de départ. Compté ici plutôt que
   // lu sur le plateau : le bouton d'annulation est évalué dès le premier rendu,
@@ -139,12 +155,51 @@ export class AppComponent implements AfterViewInit {
     this.technicalOpen = !this.technicalOpen;
   }
 
+  /** Affiche ou masque les flèches de recommandation sur le plateau. */
+  toggleArrows(): void {
+    this.showArrows = !this.showArrows;
+    this.highlightedRank = null;
+  }
+
+  /**
+   * Met une flèche en avant, les autres s'estompant.
+   *
+   * Le survol d'un coup dans la liste répond à la question « lequel est-ce sur
+   * le plateau ? » sans qu'il faille compter les pastilles.
+   */
+  highlight(rank: number | null): void {
+    // Seuls les premiers coups sont tracés : survoler les suivants ne doit pas
+    // estomper toutes les flèches au profit d'une flèche inexistante.
+    const drawn = rank !== null && this.arrows.some((a) => a.rank === rank);
+    this.highlightedRank = drawn ? rank : null;
+  }
+
+  /**
+   * État d'affichage d'une flèche.
+   *
+   * Les quatre états s'excluent, et l'opacité de chacun est fixée en CSS par
+   * un sélecteur d'attribut : c'est ce qui garantit qu'une flèche survolée
+   * repasse au premier plan, quel que soit son rang.
+   */
+  arrowState(arrow: MoveArrow): 'primary' | 'secondary' | 'pinned' | 'dimmed' {
+    if (this.highlightedRank !== null) {
+      return this.highlightedRank === arrow.rank ? 'pinned' : 'dimmed';
+    }
+    // Au repos, le coup le plus joué et celui du moteur priment sur les autres.
+    return arrow.rank === 1 || arrow.kind === 'engine' ? 'primary' : 'secondary';
+  }
+
   /** Relance la visite guidée de l'interface. */
   startTour(): void {
     this.tour.start();
   }
 
-  /** Évaluation du moteur exprimée en pions, ou annonce de mat. */
+  /**
+   * Évaluation du moteur exprimée en pions, ou annonce de mat.
+   *
+   * Le nombre est formaté à la française (virgule décimale) et porte toujours
+   * son signe : c'est lui qui désigne le camp avantagé.
+   */
   get evaluationText(): string {
     const evaluation = this.analysis?.evaluation;
     if (!evaluation) {
@@ -153,8 +208,49 @@ export class AppComponent implements AfterViewInit {
     if (evaluation.type === 'mate') {
       return `Mat en ${Math.abs(evaluation.value)}`;
     }
-    const pawns = (evaluation.value / 100).toFixed(2);
-    return evaluation.value > 0 ? `+${pawns}` : pawns;
+    return (evaluation.value / 100).toLocaleString('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      signDisplay: 'exceptZero',
+    });
+  }
+
+  /**
+   * Camp que l'évaluation désigne comme avantagé.
+   *
+   * Sert à colorer le nombre et à choisir la pastille : le signe seul ne dit
+   * pas à un débutant qui, des Blancs ou des Noirs, est devant.
+   */
+  get evaluationLeader(): 'white' | 'black' | 'balanced' {
+    const evaluation = this.analysis?.evaluation;
+    if (!evaluation) {
+      return 'balanced';
+    }
+    if (evaluation.type === 'mate') {
+      return evaluation.value > 0 ? 'white' : 'black';
+    }
+    const pawns = evaluation.value / 100;
+    if (Math.abs(pawns) < BALANCE_THRESHOLD) {
+      return 'balanced';
+    }
+    return pawns > 0 ? 'white' : 'black';
+  }
+
+  /**
+   * Libellé de la pastille accompagnant le nombre.
+   *
+   * Elle nomme le camp que le signe désigne : c'est ce qui rend le code
+   * couleur lisible sans avoir à le mémoriser.
+   */
+  get evaluationLeaderLabel(): string {
+    switch (this.evaluationLeader) {
+      case 'white':
+        return 'Blancs';
+      case 'black':
+        return 'Noirs';
+      default:
+        return 'Équilibre';
+    }
   }
 
   /**
@@ -188,8 +284,10 @@ export class AppComponent implements AfterViewInit {
     const pawns = evaluation.value / 100;
     const leader = pawns > 0 ? 'les Blancs' : 'les Noirs';
     const gap = Math.abs(pawns);
-    if (gap < 0.5) {
-      return 'La position est équilibrée.';
+    if (gap < BALANCE_THRESHOLD) {
+      // Sous un demi-pion, l'écart n'a pas de traduction concrète : mieux vaut
+      // le dire que de laisser croire à un avantage.
+      return 'Écart trop faible pour départager les deux camps.';
     }
     if (gap < 1.5) {
       return `Léger avantage pour ${leader}.`;
@@ -224,6 +322,11 @@ export class AppComponent implements AfterViewInit {
     this.agentService.analyze(fen).subscribe({
       next: (analysis) => {
         this.analysis = analysis;
+        this.arrows = buildArrows(
+          analysis.theoretical_moves,
+          analysis.evaluation?.best_move,
+        );
+        this.highlightedRank = null;
         this.syncActiveVideo(analysis.videos);
         this.loading = false;
         this.maybeStartTour();
@@ -231,6 +334,7 @@ export class AppComponent implements AfterViewInit {
       error: (err) => {
         this.error =
           err?.error?.detail ?? "Erreur lors de l'analyse de la position.";
+        this.arrows = [];
         this.loading = false;
       },
     });

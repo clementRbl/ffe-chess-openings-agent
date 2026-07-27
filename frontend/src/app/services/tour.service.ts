@@ -24,6 +24,18 @@ export class TourService {
       },
     },
     {
+      element: '[data-tour="arrows"]',
+      popover: {
+        title: 'Les coups conseillés',
+        description:
+          'Les traits en pointillé partent de la pièce à déplacer et filent vers sa ' +
+          'case d\'arrivée. Les pastilles vertes 1, 2 et 3 sont les coups les plus ' +
+          'joués par les maîtres, dans cet ordre ; l\'étoile orange est le choix du ' +
+          'moteur. Survole un coup dans la liste de droite pour isoler sa flèche, ou ' +
+          'coupe l\'affichage avec le bouton « Flèches ».',
+      },
+    },
+    {
       element: '[data-tour="verdict"]',
       popover: {
         title: 'Es-tu dans la théorie ?',
@@ -38,9 +50,12 @@ export class TourService {
       popover: {
         title: 'Qui est mieux ?',
         description:
-          "La barre penche du côté de celui qui a l'avantage : blanche à gauche, " +
-          'noire à droite. Une phrase résume la situation, et le chiffre la précise ' +
-          "en pions — +1,0 signifie « les Blancs ont l'équivalent d'un pion de plus ».",
+          "Le chiffre mesure l'écart entre les deux camps en pions : +1,00 veut dire " +
+          "« les Blancs ont l'équivalent d'un pion de plus », −1,00 « les Noirs ». La " +
+          'pastille à côté nomme le camp qui mène. La barre penche de son côté — les ' +
+          'Blancs à gauche, les Noirs à droite. Tant que la frontière reste dans la ' +
+          "bande claire du milieu, l'écart est trop petit pour départager qui que ce " +
+          'soit : la position est équilibrée.',
       },
     },
     {

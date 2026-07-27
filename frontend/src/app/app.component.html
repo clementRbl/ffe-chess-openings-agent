@@ -21,17 +21,57 @@
   <!-- Colonne de gauche : l'échiquier, qui reste visible au défilement -->
   <aside class="board-column">
     <div class="board-card">
-      <!-- Les couleurs du plateau sont accordées à la palette de l'interface. -->
-      <ngx-chess-board
-        #board
-        [size]="440"
-        [lightTileColor]="boardLightTile"
-        [darkTileColor]="boardDarkTile"
-        [sourcePointColor]="boardHighlight"
-        [destinationPointColor]="boardHighlight"
-        [legalMovesPointColor]="boardLegalMove"
-        (moveChange)="onMove($event)"
-      ></ngx-chess-board>
+      <!-- Le plateau et son calque de flèches partagent le même carré : le SVG
+           raisonne en cases (repère 8 × 8) et se met donc à l'échelle tout
+           seul. -->
+      <div class="board-stage">
+        <!-- Les couleurs du plateau sont accordées à la palette de l'interface. -->
+        <ngx-chess-board
+          #board
+          [size]="440"
+          [lightTileColor]="boardLightTile"
+          [darkTileColor]="boardDarkTile"
+          [sourcePointColor]="boardHighlight"
+          [destinationPointColor]="boardHighlight"
+          [legalMovesPointColor]="boardLegalMove"
+          (moveChange)="onMove($event)"
+        ></ngx-chess-board>
+
+        @if (showArrows && arrows.length) {
+          <!-- Purement décoratif : la même information est donnée en toutes
+               lettres dans la liste des coups. -->
+          <svg
+            class="arrow-layer"
+            viewBox="0 0 8 8"
+            aria-hidden="true"
+            data-tour="arrows"
+          >
+            @for (arrow of arrows; track arrow.rank) {
+              <g
+                class="arrow"
+                [class.engine]="arrow.kind === 'engine'"
+                [class.lead]="arrow.rank === 1"
+                [attr.data-state]="arrowState(arrow)"
+              >
+                <path class="trail" [attr.d]="arrow.path" />
+                <circle
+                  class="pin"
+                  [attr.cx]="arrow.target.x"
+                  [attr.cy]="arrow.target.y"
+                  r="0.22"
+                />
+                <text
+                  class="pin-label"
+                  [attr.x]="arrow.target.x"
+                  [attr.y]="arrow.target.y"
+                >
+                  {{ arrow.label }}
+                </text>
+              </g>
+            }
+          </svg>
+        }
+      </div>
 
       <!-- Trait en cours : lu directement dans la FEN, annoncé aux lecteurs
            d'écran à chaque changement. -->
@@ -48,12 +88,33 @@
           (click)="undo()"
         >
           <span aria-hidden="true">↶</span>
-          Annuler le coup
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="arrows-toggle"
+          [class.on]="showArrows"
+          [attr.aria-pressed]="showArrows"
+          (click)="toggleArrows()"
+        >
+          <span aria-hidden="true">↗</span>
+          Flèches
         </button>
         <button type="button" class="reset" (click)="reset()">
           Réinitialiser
         </button>
       </div>
+
+      @if (showArrows && arrows.length) {
+        <p class="arrow-legend">
+          <span class="key master">1</span>
+          <span class="key master">2</span>
+          <span class="key master">3</span>
+          coups les plus joués
+          <span class="key engine">★</span>
+          choix du moteur
+        </p>
+      }
     </div>
   </aside>
 
@@ -99,26 +160,35 @@
             Qui est mieux ?
             <span
               class="hint"
-              data-tip="La barre penche du côté de celui qui a l'avantage. Le chiffre se lit en pions : +1,0 signifie « les Blancs ont l'équivalent d'un pion de plus »."
+              data-tip="Le moteur mesure l'écart entre les deux camps et l'exprime en pions. 0 = parité, +1,00 = les Blancs ont l'équivalent d'un pion de plus, −1,00 = les Noirs. Sous un demi-pion (la bande claire au centre de la barre), l'écart est trop faible pour signifier quoi que ce soit. Les Blancs jouant en premier, le moteur leur accorde déjà une petite avance dès la position de départ."
               >?</span
             >
             <span class="source-tag">moteur Stockfish</span>
           </h3>
           @if (analysis.evaluation) {
-            <p class="eval">
+            <p class="eval" [attr.data-leader]="evaluationLeader">
               <strong>{{ evaluationText }}</strong>
-              <span class="eval-hint">{{ evaluationHint }}</span>
+              <span class="side-chip">
+                <span class="dot" aria-hidden="true"></span>
+                {{ evaluationLeaderLabel }}
+              </span>
             </p>
+            <p class="eval-hint">{{ evaluationHint }}</p>
             <div class="eval-bar" role="img" [attr.aria-label]="evaluationHint">
               <div class="white-share" [style.width.%]="evaluationShare"></div>
+              <!-- Bande d'égalité : elle donne une référence visuelle au
+                   « c'est équilibré » annoncé au-dessus, sans quoi une barre
+                   légèrement décentrée semble le contredire. -->
+              <span class="balance-zone" aria-hidden="true"></span>
             </div>
             <div class="eval-legend">
-              <span>Blancs</span>
-              <span>Noirs</span>
+              <span>◀ Blancs</span>
+              <span class="middle">égalité</span>
+              <span>Noirs ▶</span>
             </div>
             @if (analysis.evaluation.best_move) {
               <p class="best">
-                Coup suggéré :
+                Coup suggéré&nbsp;:
                 <code>{{ bestMoveText }}</code>
                 <span
                   class="hint"
@@ -143,9 +213,15 @@
             <span class="source-tag">base Lichess</span>
           </h3>
           @if (analysis.theoretical_moves.length) {
-            <ol class="moves">
+            <!-- Le survol d'un coup isole sa flèche sur le plateau : le rang
+                 de la liste et la pastille du plateau portent le même
+                 numéro. -->
+            <ol class="moves" (mouseleave)="highlight(null)">
               @for (move of analysis.theoretical_moves.slice(0, 5); track move.uci) {
-                <li>
+                <li
+                  [class.pinned]="highlightedRank === $index + 1"
+                  (mouseenter)="highlight($index + 1)"
+                >
                   <span class="san">{{ frenchMove(move.san) }}</span>
                   <span class="stats">{{ formatGames(move.total) }} parties</span>
                 </li>

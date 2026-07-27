@@ -238,9 +238,9 @@ sur la première étape (« Ton échiquier ») ; la parcourir jusqu'au bout avec
 
 > Le nombre d'étapes s'adapte à ce qui est affiché : sur la position de départ,
 > les cartes « Comprendre cette ouverture » et « Vidéos explicatives » sont
-> absentes, la visite compte donc 6 étapes au lieu de 8.
+> absentes, la visite compte donc 7 étapes au lieu de 9.
 
-Cliquer ensuite sur **Revoir la visite guidée**, le bouton jaune en haut à
+Cliquer ensuite sur **Revoir la visite guidée**, le bouton vert en haut à
 droite.
 
 **Attendu :** la visite se relance à la demande.
@@ -269,7 +269,7 @@ Jouer **1.e4** en glissant le pion, puis **1…c5** pour les Noirs.
 
 ### 4.3 Test 14 — Annuler un coup resynchronise tout l'écran
 
-Après 1.e4 c5, cliquer sur **Annuler le coup**.
+Après 1.e4 c5, cliquer sur **Annuler**.
 
 **Attendu :** l'écran revient exactement à l'état d'après 1.e4 — la pièce
 retourne sur sa case, la pastille repasse « Aux Noirs de jouer », le bandeau
@@ -283,20 +283,77 @@ Cliquer une seconde fois.
 n'y a plus rien à annuler. Sur la position de départ, il est grisé dès le
 chargement.
 
-### 4.4 Test 15 — Les infobulles expliquent le vocabulaire
+### 4.4 Test 15 — Les coups conseillés sont tracés sur l'échiquier
+
+Jouer 1.e4 c5.
+
+**Attendu :** trois traits en pointillé se dessinent sur le plateau, animés du
+départ vers l'arrivée. Chacun part de la pièce à déplacer et se termine par une
+pastille verte numérotée **1**, **2** ou **3** — le même rang que dans la liste
+« Ce que jouent les maîtres ». Sur cette position, la pastille 1 est en f3 (le
+cavalier du roi), et les pastilles 2 et 3 sont **côte à côte** en c3, où
+aboutissent le cavalier de la dame et le pion. Le trajet du cavalier passe par
+un coude, comme son déplacement réel : jamais une ligne droite en diagonale.
+
+Une pastille **orange étoilée** apparaît lorsque le moteur recommande un coup
+absent des trois premiers ; s'il rejoint l'un d'eux, aucune quatrième flèche
+n'est tracée. La légende sous le plateau rappelle ce code.
+
+Survoler le deuxième coup de la liste.
+
+**Attendu :** sa flèche seule reste nette, les autres s'effacent presque
+entièrement, et la ligne survolée prend un fond vert pâle.
+
+Cliquer sur le bouton **Flèches**.
+
+**Attendu :** le plateau redevient nu et le bouton perd sa teinte verte. Un
+second clic les rétablit.
+
+Déplacer une pièce en passant par-dessus une flèche.
+
+**Attendu :** le coup se joue normalement — le calque des flèches n'intercepte
+aucun clic.
+
+### 4.5 Test 16 — La barre d'évaluation se lit sans ambiguïté
+
+Observer la carte « Qui est mieux ? » sur la position de départ.
+
+**Attendu :** un nombre signé en écriture française (`+0,31` et non `+0.31`),
+gris, suivi d'une pastille grise **« Équilibre »** et de la phrase « Écart trop
+faible pour départager les deux camps ». La barre est légèrement décalée vers
+la droite du centre, mais la frontière reste **dans la bande claire du milieu**,
+celle qui matérialise la zone d'égalité (un demi-pion de part et d'autre).
+
+> **Pourquoi pas 0,00 au départ ?** Les Blancs jouent en premier ; tous les
+> moteurs leur accordent un léger avantage initial, de l'ordre de deux à trois
+> dixièmes de pion. C'est le comportement attendu, pas un défaut de réglage.
+
+Prendre une pièce adverse pour créer un vrai déséquilibre.
+
+**Attendu :** le nombre passe au **vert** avec la pastille « Blancs » si ce sont
+les Blancs qui mènent, à l'**orange** avec la pastille « Noirs » dans le cas
+contraire, la phrase devient « Léger avantage », « Avantage net » ou « Position
+gagnante pour … », et la frontière de la barre sort de la bande d'égalité.
+
+> **Convention de signe.** Le score est toujours donné du point de vue des
+> Blancs, quel que soit le camp au trait : positif = avantage aux Blancs.
+
+### 4.6 Test 17 — Les infobulles expliquent le vocabulaire
 
 Survoler les marqueurs `?` des cartes, ainsi que le badge « Dans la théorie ».
 
-**Attendu :** une infobulle explique en langage courant la barre d'évaluation,
-la notation UCI du coup suggéré, l'origine des coups de maîtres, le périmètre
-des vidéos et le sens de « dans la théorie ».
+**Attendu :** une infobulle explique en langage courant la lecture du score et
+de la bande d'égalité, la notation UCI du coup suggéré, l'origine des coups de
+maîtres et la correspondance des initiales de pièces, le périmètre des vidéos
+et le sens de « dans la théorie ».
 
-Laisser ensuite une pièce en prise et la faire capturer.
+Relancer la visite guidée depuis le bouton de l'en-tête.
 
-**Attendu :** la barre d'évaluation bascule visiblement du côté de l'adversaire
-et la phrase passe à « Avantage net » ou « Position gagnante pour … ».
+**Attendu :** neuf étapes s'enchaînent, dont une pointe les flèches du plateau
+et une autre la carte d'évaluation. Les étapes visant une carte absente de
+l'écran (contexte, vidéos) sont passées sans erreur.
 
-### 4.5 Test 16 — Les vidéos ne se chargent qu'à la demande
+### 4.7 Test 18 — Les vidéos ne se chargent qu'à la demande
 
 **Attendu avant tout clic :** le titre de la carte reprend le nom de l'ouverture
 (« Vidéos sur Sicilian Defense ») et précise que ces vidéos portent sur
@@ -309,7 +366,7 @@ Cliquer sur une vignette.
 **Attendu :** le lecteur apparaît au-dessus de la liste et la vidéo se lit dans
 la page. Le bouton « Fermer la vidéo » la retire.
 
-### 4.6 Test 17 — La vidéo ne redémarre pas toute seule
+### 4.8 Test 19 — La vidéo ne redémarre pas toute seule
 
 Lancer une vidéo, la laisser tourner quelques secondes, puis **cliquer plusieurs
 fois n'importe où dans la page** (sur un titre, dans le vide, sur une infobulle).
@@ -322,7 +379,7 @@ Jouer ensuite un coup sur l'échiquier.
 lecture continue sans coupure ; sinon le lecteur se ferme et la nouvelle liste
 de vignettes s'affiche.
 
-### 4.7 Test 18 — Position hors théorie depuis l'interface
+### 4.9 Test 20 — Position hors théorie depuis l'interface
 
 Cliquer sur « Réinitialiser la partie », puis jouer **1.f3 e5 2.g4**.
 
@@ -332,7 +389,7 @@ signalée hors théorie, l'évaluation annonce « Mat en 1 » et le coup suggér
 disparaissent, et la carte des coups de maîtres invite à s'appuyer sur le
 moteur.
 
-### 4.8 Test 19 — Les appels passent bien par le proxy
+### 4.10 Test 21 — Les appels passent bien par le proxy
 
 ```bash
 curl http://localhost:4200/api/v1/healthcheck
@@ -346,7 +403,7 @@ problème de CORS.
 
 ## 5. Tests du cache et de l'historique (MongoDB)
 
-### 5.1 Test 20 — Les analyses sont historisées
+### 5.1 Test 22 — Les analyses sont historisées
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet \
@@ -357,7 +414,7 @@ docker compose exec mongo mongosh ffe_chess --quiet \
 `in_theory`, `theoretical_moves`, `evaluation`, `summary` et `created_at`. Les
 positions jouées au § 4 doivent y figurer.
 
-### 5.2 Test 21 — Les appels externes sont mis en cache
+### 5.2 Test 23 — Les appels externes sont mis en cache
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet --eval "db.api_cache.countDocuments()"
@@ -373,7 +430,7 @@ appel n'a été consommé sur le quota YouTube.
 > délai vient de Stockfish et du calcul d'embedding, qui ne sont pas mis en
 > cache. Le cache protège les quotas, pas la latence.
 
-### 5.3 Test 22 — L'expiration automatique est configurée
+### 5.3 Test 24 — L'expiration automatique est configurée
 
 ```bash
 docker compose exec mongo mongosh ffe_chess --quiet \
@@ -387,7 +444,7 @@ C'est lui qui fait purger par MongoDB les entrées de plus de 24 heures.
 
 ## 6. Test de persistance
 
-### Test 23 — Les données survivent à la recréation des conteneurs
+### Test 25 — Les données survivent à la recréation des conteneurs
 
 ```bash
 # 1. Relever les compteurs
@@ -421,7 +478,7 @@ docker volume ls | grep echecs
 
 ## 7. Tests automatisés
 
-### Test 24 — Suite de tests du backend
+### Test 26 — Suite de tests du backend
 
 ```bash
 cd backend && uv run pytest
@@ -432,7 +489,7 @@ cd backend && uv run pytest
 validation FEN, l'aiguillage du graphe, la dégradation gracieuse, le cache et le
 contrat HTTP.
 
-### Test 25 — Suite de tests du frontend
+### Test 27 — Suite de tests du frontend
 
 ```bash
 cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
@@ -442,7 +499,7 @@ cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
 demande, stabilité de l'URL d'intégration, fermeture) et la mise en forme de
 l'évaluation du moteur.
 
-### Test 26 — Qualité du code
+### Test 28 — Qualité du code
 
 ```bash
 cd backend && uv run ruff check . && uv run ruff format --check app tests
@@ -458,7 +515,7 @@ Ces tests vérifient la promesse centrale de l'architecture : **la panne d'une
 source ne doit jamais interrompre l'analyse**. Ils se lisent dans le champ
 `sources` de la réponse.
 
-### 8.1 Test 27 — Panne de MongoDB
+### 8.1 Test 29 — Panne de MongoDB
 
 ```bash
 docker compose stop mongo
@@ -472,7 +529,7 @@ vidéos), et seul `sources.mongo` passe à `"ok": false` avec un message
 d'explication. Le cache et l'historique sont perdus le temps de la panne, rien
 d'autre.
 
-### 8.2 Test 28 — Panne de Milvus
+### 8.2 Test 30 — Panne de Milvus
 
 ```bash
 docker compose stop milvus
@@ -487,7 +544,7 @@ les coups théoriques, l'évaluation et les vidéos sont bien là.
 > Après redémarrage, laisser à Milvus jusqu'à 90 secondes pour redevenir
 > `healthy` avant de rejouer un test.
 
-### 8.3 Test 29 — Clés d'API absentes
+### 8.3 Test 31 — Clés d'API absentes
 
 Plutôt que de modifier `.env`, lancer un backend jetable sans clés sur le port
 8001 — la démonstration reste ainsi utilisable pendant le test :
@@ -586,21 +643,23 @@ docker compose logs -f backend      # en continu
 | 12 | Interface servie et visite guidée | ☐ |
 | 13 | Synchronisation de la position | ☐ |
 | 14 | Annulation d'un coup | ☐ |
-| 15 | Infobulles du vocabulaire | ☐ |
-| 16 | Vidéos chargées à la demande | ☐ |
-| 17 | La vidéo ne redémarre pas seule | ☐ |
-| 18 | Position hors théorie depuis l'interface | ☐ |
-| 19 | Proxy nginx | ☐ |
-| 20 | Historique des analyses | ☐ |
-| 21 | Mise en cache des appels externes | ☐ |
-| 22 | Expiration automatique du cache | ☐ |
-| 23 | Persistance des volumes | ☐ |
-| 24 | Tests automatisés du backend | ☐ |
-| 25 | Tests automatisés du frontend | ☐ |
-| 26 | Qualité du code | ☐ |
-| 27 | Panne de MongoDB | ☐ |
-| 28 | Panne de Milvus | ☐ |
-| 29 | Clés d'API absentes | ☐ |
+| 15 | Flèches des coups conseillés | ☐ |
+| 16 | Lecture de la barre d'évaluation | ☐ |
+| 17 | Infobulles du vocabulaire | ☐ |
+| 18 | Vidéos chargées à la demande | ☐ |
+| 19 | La vidéo ne redémarre pas seule | ☐ |
+| 20 | Position hors théorie depuis l'interface | ☐ |
+| 21 | Proxy nginx | ☐ |
+| 22 | Historique des analyses | ☐ |
+| 23 | Mise en cache des appels externes | ☐ |
+| 24 | Expiration automatique du cache | ☐ |
+| 25 | Persistance des volumes | ☐ |
+| 26 | Tests automatisés du backend | ☐ |
+| 27 | Tests automatisés du frontend | ☐ |
+| 28 | Qualité du code | ☐ |
+| 29 | Panne de MongoDB | ☐ |
+| 30 | Panne de Milvus | ☐ |
+| 31 | Clés d'API absentes | ☐ |
 
 Pour arrêter le système en conservant les données :
 
