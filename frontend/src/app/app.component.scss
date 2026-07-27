@@ -447,6 +447,16 @@
     font-size: 0.95rem;
     line-height: 1.6;
   }
+
+  // Ce qu'il reste à faire pour obtenir le reste : une invitation, pas un
+  // constat de manque.
+  .summary.next {
+    margin-top: 0.55rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--rule-strong);
+    color: var(--ink-muted);
+    font-size: 0.87rem;
+  }
 }
 
 // --- Cartes ----------------------------------------------------------------

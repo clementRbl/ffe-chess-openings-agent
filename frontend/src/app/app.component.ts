@@ -131,6 +131,17 @@ export class AppComponent implements AfterViewInit {
     return this.whiteToMove ? 'Aux Blancs de jouer' : 'Aux Noirs de jouer';
   }
 
+  /**
+   * Vrai tant qu'aucun coup n'a été joué.
+   *
+   * La comparaison porte sur la disposition des pièces, premier champ de la
+   * FEN : aucune suite de coups légaux ne permet d'y revenir, les pions ne
+   * reculant pas. C'est donc un test exact, et non un simple compteur.
+   */
+  get isStartPosition(): boolean {
+    return this.currentFen.split(' ')[0] === START_FEN.split(' ')[0];
+  }
+
   /** URL d'intégration de la vidéo active (référence stable). */
   get videoUrl(): SafeResourceUrl | null {
     return this.activeVideoUrl;

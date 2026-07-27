@@ -233,8 +233,12 @@ la théorie » puis le nom de l'ouverture en gros). La **visite guidée** s'ouvr
 sur la première étape (« Ton échiquier ») ; la parcourir jusqu'au bout avec
 « Suivant ».
 
-> Sur la position de départ, Lichess ne nomme aucune ouverture : le bandeau
-> affiche « Ouverture non identifiée », ce qui est normal.
+> Sur la position de départ, Lichess ne nomme aucune ouverture — aucun coup
+> n'a été joué, il n'y a donc rien à identifier. Le bandeau affiche « À toi
+> d'ouvrir » et invite à jouer le premier coup ; les cartes « Comprendre cette
+> ouverture » et « Vidéos » n'apparaissent qu'à partir de là. Ce n'est pas un
+> échec d'identification : dès **1.e4**, le bandeau annonce « King's Pawn
+> Game » et les deux cartes se remplissent.
 
 > Le nombre d'étapes s'adapte à ce qui est affiché : sur la position de départ,
 > les cartes « Comprendre cette ouverture » et « Vidéos explicatives » sont

@@ -145,12 +145,27 @@
         </span>
 
         <!-- Lichess ne nomme pas toujours l'ouverture : le titre de repli ne
-             doit pas contredire le badge « dans la théorie ». -->
+             doit pas contredire le badge « dans la théorie ». Sur la position
+             de départ, il n'y a rien à identifier — aucun coup n'a été joué —
+             ce qui n'est pas la même chose qu'une ouverture inconnue. -->
         <h2 class="opening">
-          {{ analysis.opening ?? 'Ouverture non identifiée' }}
+          @if (analysis.opening) {
+            {{ analysis.opening }}
+          } @else if (isStartPosition) {
+            À toi d'ouvrir
+          } @else {
+            Ouverture non identifiée
+          }
         </h2>
 
         <p class="summary">{{ analysis.summary }}</p>
+
+        @if (!analysis.opening && isStartPosition) {
+          <p class="summary next">
+            Une ouverture porte un nom dès le premier coup. Joue-le, et cet
+            écran te donnera son nom, ses idées et des vidéos pour l'apprendre.
+          </p>
+        }
       </div>
 
       <!-- Deux cartes côte à côte : le verdict du moteur et celui des maîtres -->

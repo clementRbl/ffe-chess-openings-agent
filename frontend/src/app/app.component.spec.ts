@@ -285,6 +285,17 @@ describe('AppComponent — lisibilité des recommandations', () => {
     expect(component.evaluationHint).toBe('');
   });
 
+  // Lichess ne nomme aucune ouverture sur la position de départ, faute de coup
+  // joué : l'écran doit inviter à commencer, pas annoncer un échec
+  // d'identification.
+  it('distingue la position de départ d’une ouverture inconnue', () => {
+    expect(component.isStartPosition).toBeTrue();
+
+    component.currentFen =
+      'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1';
+    expect(component.isStartPosition).toBeFalse();
+  });
+
   it('lit le trait dans la FEN', () => {
     component.currentFen =
       'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
