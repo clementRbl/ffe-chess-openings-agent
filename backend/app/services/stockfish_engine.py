@@ -15,6 +15,28 @@ class StockfishError(Exception):
     """Levée lorsque le moteur Stockfish est indisponible ou échoue à évaluer."""
 
 
+def _to_white_perspective(value: int, fen: str) -> int:
+    """Ramène un score du point de vue du camp au trait à celui des Blancs.
+
+    Les moteurs UCI, Stockfish compris, expriment leur évaluation du point de
+    vue du joueur qui a le trait : sur une position où les Blancs ont une dame
+    de plus mais où les Noirs jouent, le moteur renvoie une valeur négative.
+    Cette convention est peu lisible pour un consommateur de l'API — d'autant
+    que le trait change à chaque coup. On la ramène donc à la convention
+    d'affichage habituelle : positif = avantage aux Blancs.
+
+    Args:
+        value: Score renvoyé par le moteur (centipions ou nombre de coups
+            avant mat).
+        fen: Position évaluée, dont le second champ porte le trait.
+
+    Returns:
+        Le score du point de vue des Blancs.
+    """
+    black_to_move = fen.split()[1] == "b"
+    return -value if black_to_move else value
+
+
 class StockfishService:
     """Enveloppe autour du moteur Stockfish pour l'évaluation de positions."""
 
@@ -41,7 +63,8 @@ class StockfishService:
             fen: Position au format FEN.
 
         Returns:
-            L'évaluation (centipions ou mat) et le meilleur coup.
+            L'évaluation (centipions ou mat) et le meilleur coup, ramenés au
+            point de vue des Blancs.
 
         Raises:
             StockfishError: si l'exécutable est introuvable ou si l'évaluation
@@ -68,7 +91,7 @@ class StockfishService:
         return EvaluationResponse(
             fen=fen,
             type=evaluation["type"],
-            value=evaluation["value"],
+            value=_to_white_perspective(evaluation["value"], fen),
             best_move=best_move,
         )
 

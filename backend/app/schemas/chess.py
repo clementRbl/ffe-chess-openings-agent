@@ -39,8 +39,9 @@ class EvaluationResponse(BaseModel):
     fen: str
     type: str = Field(description="Type d'évaluation : 'cp' (centipions) ou 'mate'.")
     value: int = Field(
-        description="Centipions du point de vue du trait, ou nombre de coups "
-        "avant le mat lorsque le type vaut 'mate'."
+        description="Score du point de vue des Blancs : centipions, ou nombre de "
+        "coups avant le mat lorsque le type vaut 'mate'. Positif = avantage aux "
+        "Blancs, négatif = avantage aux Noirs, quel que soit le camp au trait."
     )
     best_move: str | None = Field(
         default=None, description="Meilleur coup selon Stockfish, en notation UCI."

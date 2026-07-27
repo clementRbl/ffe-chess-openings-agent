@@ -93,6 +93,66 @@ def test_youtube_titles_have_their_html_entities_decoded():
     assert videos[0].channel == "Chess & Co"
 
 
+class FakeStockfish:
+    """Moteur simulé renvoyant une évaluation fixe, du point de vue du trait."""
+
+    def __init__(self, evaluation: dict, **_kwargs) -> None:
+        self._evaluation = evaluation
+
+    def set_fen_position(self, fen: str) -> None:
+        pass
+
+    def get_evaluation(self) -> dict:
+        return self._evaluation
+
+    def get_best_move(self) -> str:
+        return "e2e4"
+
+
+def _evaluate_with(monkeypatch, evaluation: dict, fen: str):
+    """Évalue une position en remplaçant le moteur par une doublure."""
+    from app.services import stockfish_engine as module
+
+    monkeypatch.setattr(
+        module,
+        "Stockfish",
+        lambda **kwargs: FakeStockfish(evaluation, **kwargs),
+    )
+    return module.StockfishService().evaluate(fen)
+
+
+# Les moteurs UCI raisonnent du point de vue du camp au trait ; l'API doit
+# renvoyer un score lisible sans savoir qui joue.
+WHITE_TO_MOVE = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+BLACK_TO_MOVE = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
+
+
+def test_evaluation_is_unchanged_when_white_is_to_move(monkeypatch):
+    """Trait aux Blancs : le score du moteur est déjà dans la bonne convention."""
+    response = _evaluate_with(monkeypatch, {"type": "cp", "value": 681}, WHITE_TO_MOVE)
+
+    assert response.value == 681
+
+
+def test_evaluation_is_flipped_when_black_is_to_move(monkeypatch):
+    """Trait aux Noirs : un score négatif pour eux est un avantage aux Blancs."""
+    response = _evaluate_with(monkeypatch, {"type": "cp", "value": -681}, BLACK_TO_MOVE)
+
+    assert response.value == 681
+
+
+def test_mate_announced_by_black_stays_negative(monkeypatch):
+    """Un mat annoncé par les Noirs doit rester négatif, camp au trait compris.
+
+    Régression : l'interface en déduisait que « les Blancs forcent le mat » sur
+    une position où ce sont les Noirs qui matent au coup suivant.
+    """
+    response = _evaluate_with(monkeypatch, {"type": "mate", "value": 1}, BLACK_TO_MOVE)
+
+    assert response.type == "mate"
+    assert response.value == -1
+
+
 def test_wikichess_articles_are_chunked_by_paragraph(tmp_path):
     """Le corpus est découpé en passages, le titre venant de l'en-tête markdown."""
     from app.scripts.ingest import load_chunks
