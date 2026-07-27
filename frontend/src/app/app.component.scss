@@ -25,17 +25,37 @@
     opacity: 0.8;
   }
 
+  // Bouton volontairement contrasté : c'est le point d'entrée d'un utilisateur
+  // qui ne sait pas par où commencer.
   .tour-button {
-    padding: 0.45rem 0.9rem;
-    border: 1px solid rgba(255, 255, 255, 0.45);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 1rem;
+    border: none;
     border-radius: 999px;
-    background: transparent;
-    color: #fff;
+    background: #fbbf24;
+    color: #1f2933;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 
     &:hover {
-      background: rgba(255, 255, 255, 0.12);
+      background: #fcd34d;
+    }
+
+    .tour-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.15rem;
+      height: 1.15rem;
+      border-radius: 50%;
+      background: #1f2933;
+      color: #fbbf24;
+      font-size: 0.75rem;
+      font-weight: 700;
     }
   }
 }
@@ -199,11 +219,38 @@
     }
   }
 
+  // Barre d'évaluation : la part blanche à gauche, la part noire à droite.
+  // Un coup d'œil suffit à voir qui est mieux, sans lire un chiffre.
+  .eval-bar {
+    display: flex;
+    height: 14px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #1f2933;
+    border: 1px solid #d1d5db;
+
+    .white-share {
+      background: #f9fafb;
+      border-right: 1px solid #9ca3af;
+      transition: width 0.25s ease;
+    }
+  }
+
+  .eval-legend {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.2rem;
+    color: #9ca3af;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
   .eval {
     display: flex;
     align-items: baseline;
     gap: 0.6rem;
-    margin: 0;
+    margin: 0.6rem 0 0;
 
     strong {
       font-size: 1.35rem;
@@ -213,6 +260,15 @@
       color: #4b5563;
       font-size: 0.85rem;
     }
+  }
+
+  // Précision sur le périmètre des vidéos : elles concernent l'ouverture, pas
+  // le coup joué (voir la note sur le système d'analyse vidéo par position).
+  .scope-note {
+    margin: -0.25rem 0 0.75rem;
+    color: #6b7280;
+    font-size: 0.78rem;
+    line-height: 1.4;
   }
 
   .best {

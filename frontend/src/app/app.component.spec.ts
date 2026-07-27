@@ -137,4 +137,28 @@ describe('AppComponent — lisibilité des recommandations', () => {
     expect(component.evaluationText).toBe('—');
     expect(component.evaluationHint).toBe('');
   });
+
+  it('place le curseur de la barre au centre à l’équilibre', () => {
+    withEvaluation('cp', 0);
+    expect(component.evaluationShare).toBe(50);
+
+    component.analysis = null;
+    expect(component.evaluationShare).toBe(50);
+  });
+
+  it('fait pencher la barre du côté de celui qui mène', () => {
+    withEvaluation('cp', 200);
+    expect(component.evaluationShare).toBe(70);
+
+    withEvaluation('cp', -200);
+    expect(component.evaluationShare).toBe(30);
+  });
+
+  it('borne la barre à cinq pions et l’envoie à fond sur un mat', () => {
+    withEvaluation('cp', 5000);
+    expect(component.evaluationShare).toBe(100);
+
+    withEvaluation('mate', -2);
+    expect(component.evaluationShare).toBe(0);
+  });
 });

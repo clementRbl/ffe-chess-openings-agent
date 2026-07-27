@@ -105,6 +105,24 @@ export class AppComponent implements AfterViewInit {
     return evaluation.value > 0 ? `+${pawns}` : pawns;
   }
 
+  /**
+   * Part de la barre d'évaluation revenant aux Blancs, en pourcentage.
+   *
+   * L'écart est borné à cinq pions : au-delà, la position est de toute façon
+   * gagnée et la barre n'a plus rien à nuancer.
+   */
+  get evaluationShare(): number {
+    const evaluation = this.analysis?.evaluation;
+    if (!evaluation) {
+      return 50;
+    }
+    if (evaluation.type === 'mate') {
+      return evaluation.value > 0 ? 100 : 0;
+    }
+    const pawns = Math.max(-5, Math.min(5, evaluation.value / 100));
+    return 50 + pawns * 10;
+  }
+
   /** Traduction en langage courant de l'évaluation du moteur. */
   get evaluationHint(): string {
     const evaluation = this.analysis?.evaluation;

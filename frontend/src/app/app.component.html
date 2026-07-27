@@ -9,7 +9,8 @@
     data-tour="replay"
     (click)="startTour()"
   >
-    Visite guidée
+    <span class="tour-icon" aria-hidden="true">?</span>
+    Revoir la visite guidée
   </button>
 </header>
 
@@ -65,12 +66,19 @@
           Qui est mieux ?
           <span
             class="hint"
-            data-tip="Un moteur d'échecs calcule l'avantage en équivalent pions : positif pour les Blancs, négatif pour les Noirs."
+            data-tip="La barre penche du côté de celui qui a l'avantage. Le chiffre se lit en pions : +1,0 signifie « les Blancs ont l'équivalent d'un pion de plus »."
             >?</span
           >
           <span class="source-tag">moteur Stockfish</span>
         </h3>
         @if (analysis.evaluation) {
+          <div class="eval-bar" role="img" [attr.aria-label]="evaluationHint">
+            <div class="white-share" [style.width.%]="evaluationShare"></div>
+          </div>
+          <div class="eval-legend">
+            <span>Blancs</span>
+            <span>Noirs</span>
+          </div>
           <p class="eval">
             <strong>{{ evaluationText }}</strong>
             <span class="eval-hint">{{ evaluationHint }}</span>
@@ -141,9 +149,23 @@
       @if (analysis.videos.length) {
         <div class="card" data-tour="videos">
           <h3>
-            Vidéos explicatives
+            @if (analysis.opening) {
+              Vidéos sur {{ analysis.opening }}
+            } @else {
+              Vidéos explicatives
+            }
+            <span
+              class="hint"
+              data-tip="Ces vidéos sont recherchées à partir du nom de l'ouverture. Elles la présentent dans son ensemble et ne pointent pas le coup que tu viens de jouer."
+              >?</span
+            >
             <span class="source-tag">YouTube</span>
           </h3>
+
+          <p class="scope-note">
+            Ces vidéos portent sur <strong>l'ouverture entière</strong>, pas sur
+            ce coup précis.
+          </p>
 
           @if (activeVideo) {
             <div class="video-player">

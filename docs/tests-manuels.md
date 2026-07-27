@@ -230,7 +230,8 @@ droite, et la **visite guidée** qui s'ouvre sur la première étape
 > les cartes « Comprendre cette ouverture » et « Vidéos explicatives » sont
 > absentes, la visite compte donc 6 étapes au lieu de 8.
 
-Cliquer ensuite sur **Visite guidée** en haut à droite.
+Cliquer ensuite sur **Revoir la visite guidée**, le bouton jaune en haut à
+droite.
 
 **Attendu :** la visite se relance à la demande.
 
@@ -241,25 +242,33 @@ Jouer **1.e4** en glissant le pion, puis **1…c5** pour les Noirs.
 **Attendu à chaque coup :**
 
 1. la mention « Analyse de la position en cours… » apparaît brièvement ;
-2. après 1…c5, le panneau affiche l'ouverture **Sicilian Defense**, l'évaluation
-   du moteur avec sa traduction en clair (« La position est équilibrée. »), les
-   coups joués par les maîtres avec leur nombre de parties, des explications sur
-   l'ouverture et cinq vignettes vidéo ;
+2. après 1…c5, le panneau affiche l'ouverture **Sicilian Defense**, une **barre
+   d'évaluation** penchant très légèrement du côté des Blancs avec sa traduction
+   en clair (« La position est équilibrée. »), les coups joués par les maîtres
+   avec leur nombre de parties, des explications sur l'ouverture et la carte
+   « Vidéos sur Sicilian Defense » ;
 3. déplier « Détails techniques » : la FEN affichée correspond à la position.
 
 ### 4.3 Test 14 — Les infobulles expliquent le vocabulaire
 
 Survoler les marqueurs `?` des cartes, ainsi que le badge « Dans la théorie ».
 
-**Attendu :** une infobulle explique en langage courant l'évaluation du moteur,
-la notation UCI du coup suggéré, l'origine des coups de maîtres et le sens de
-« dans la théorie ».
+**Attendu :** une infobulle explique en langage courant la barre d'évaluation,
+la notation UCI du coup suggéré, l'origine des coups de maîtres, le périmètre
+des vidéos et le sens de « dans la théorie ».
+
+Laisser ensuite une pièce en prise et la faire capturer.
+
+**Attendu :** la barre d'évaluation bascule visiblement du côté de l'adversaire
+et la phrase passe à « Avantage net » ou « Position gagnante pour … ».
 
 ### 4.4 Test 15 — Les vidéos ne se chargent qu'à la demande
 
-**Attendu avant tout clic :** aucune vidéo n'est lancée, seules cinq vignettes
-sont proposées sous la mention « Choisis une vidéo pour la regarder ici — rien
-ne se charge avant ton clic ».
+**Attendu avant tout clic :** le titre de la carte reprend le nom de l'ouverture
+(« Vidéos sur Sicilian Defense ») et précise que ces vidéos portent sur
+l'ouverture entière et non sur le coup joué. Aucune vidéo n'est lancée, seules
+cinq vignettes sont proposées sous la mention « Choisis une vidéo pour la
+regarder ici — rien ne se charge avant ton clic ».
 
 Cliquer sur une vignette.
 

@@ -36,9 +36,9 @@ export class TourService {
       popover: {
         title: 'Qui est mieux ?',
         description:
-          "Un moteur d'échecs calcule qui a l'avantage. Un nombre positif favorise " +
-          'les Blancs, négatif les Noirs. En dessous de 0,5 environ, la partie est ' +
-          'équilibrée. L\'unité est le pion : +1,0 équivaut à un pion d\'avance.',
+          "La barre penche du côté de celui qui a l'avantage : blanche à gauche, " +
+          'noire à droite. Une phrase résume la situation, et le chiffre la précise ' +
+          "en pions — +1,0 signifie « les Blancs ont l'équivalent d'un pion de plus ».",
       },
     },
     {
@@ -65,8 +65,10 @@ export class TourService {
       popover: {
         title: 'Des vidéos pour aller plus loin',
         description:
-          'Clique sur une vignette pour lancer la vidéo dans la page. Rien ne se ' +
-          "charge tant que tu ne l'as pas demandé.",
+          'Clique sur une vignette pour lancer la vidéo dans la page — rien ne se ' +
+          "charge tant que tu ne l'as pas demandé. Attention : ces vidéos " +
+          "présentent l'ouverture dans son ensemble, elles ne commentent pas le " +
+          'coup que tu viens de jouer.',
       },
     },
     {
