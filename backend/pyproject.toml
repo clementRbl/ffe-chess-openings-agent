@@ -15,10 +15,24 @@ dependencies = [
     "langgraph>=1.2.7",
     "google-api-python-client>=2.198.0",
     "pymongo>=4.9",
+    "torch>=2.6.0",
 ]
 
 [tool.uv]
 package = false
+
+# Le modèle d'embedding tourne sur CPU dans le conteneur : on installe les roues
+# PyTorch correspondantes plutôt que celles par défaut, qui embarquent ~5 Go de
+# bibliothèques CUDA inutiles ici. ``torch`` est déclaré explicitement (bien
+# qu'il soit déjà installé par sentence-transformers) car une source ne
+# s'applique qu'aux dépendances directes du projet.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

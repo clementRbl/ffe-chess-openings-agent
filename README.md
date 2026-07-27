@@ -24,43 +24,118 @@ Le tout est orchestré par un agent **LangGraph** et exposé via une API
 
 ```
 .
-├── backend/            # API FastAPI + agent (Python)
-│   └── app/
-│       ├── api/        # Routes HTTP (versionnées : /api/v1)
-│       ├── core/       # Configuration (variables d'environnement)
-│       └── main.py     # Point d'entrée de l'application
-├── frontend/           # Interface Angular (à venir – Étape 5)
-├── docker-compose.yml  # Orchestration des services
-├── .env.example        # Modèle de configuration
-└── CONSIGNES.md        # Document de référence de la mission
+├── backend/                # API FastAPI + agent (Python)
+│   ├── app/
+│   │   ├── api/v1/         # Routes HTTP (versionnées : /api/v1)
+│   │   ├── core/           # Configuration (variables d'environnement)
+│   │   ├── graph/          # Workflows LangGraph (agent, RAG, vidéos)
+│   │   ├── schemas/        # Modèles Pydantic des réponses
+│   │   ├── scripts/        # Ingestion du corpus dans Milvus
+│   │   ├── services/       # Logique métier (Lichess, Stockfish, Milvus, YouTube, MongoDB)
+│   │   └── main.py         # Point d'entrée de l'application
+│   ├── data/wikichess/     # Corpus d'articles d'ouvertures
+│   └── tests/              # Tests pytest (sans service externe)
+├── frontend/               # Interface Angular (échiquier + panneau agent)
+│   ├── src/app/            # Composant racine, service d'appel à l'API
+│   └── projects/           # Librairie ngx-chess-board (source locale, cf. note)
+├── docs/                   # Livrables documentaires (note MCP, autoévaluation)
+├── docker-compose.yml      # Orchestration de tous les services
+├── .env.example            # Modèle de configuration
+└── CONSIGNES.md            # Document de référence de la mission
 ```
+
+> **Note sur `frontend/projects/`** : la librairie `ngx-chess-board` est intégrée
+> au dépôt sous forme de source locale (comme dans le
+> [repo de référence OpenClassrooms](https://github.com/OpenClassrooms-Student-Center/material-chessboard)),
+> car le paquet npm publié ne suit pas la version d'Angular utilisée ici. Elle
+> est compilée avant l'application par le `Dockerfile` du frontend.
 
 ## Prérequis
 
-- [Docker](https://docs.docker.com/get-docker/) et Docker Compose
+- [Docker](https://docs.docker.com/get-docker/) et Docker Compose v2
+- ~8 Go d'espace disque (images Docker + modèle d'embedding)
 - (Développement local hors Docker) Python 3.12+ et [uv](https://docs.astral.sh/uv/)
 
-## Démarrage rapide
+## Installation et démarrage
+
+Depuis une installation fraîche, trois commandes suffisent :
 
 ```bash
-# 1. Copier le modèle de configuration
+# 1. Récupérer le projet
+git clone <url-du-depot> && cd federation-francaise-des-echecs
+
+# 2. Copier le modèle de configuration (puis y renseigner les clés, cf. § Configuration)
 cp .env.example .env
 
-# 2. Lancer les services
-docker compose up --build
+# 3. Construire et lancer l'ensemble des services
+docker compose up --build -d
 ```
 
-L'API est alors disponible sur http://localhost:8000.
+Le premier démarrage construit les images (backend Python + Stockfish, frontend
+Angular compilé puis servi par nginx) et télécharge les images de MongoDB,
+Milvus, etcd et MinIO : comptez une dizaine de minutes selon la connexion.
 
-### Vérifier que le backend fonctionne
+Vérifier que les six services tournent et sont sains :
 
 ```bash
-curl http://localhost:8000/api/v1/healthcheck
-# -> {"status":"ok"}
+docker compose ps
 ```
 
-La documentation interactive (Swagger) est accessible sur
-http://localhost:8000/docs.
+Puis charger le corpus Wikichess dans Milvus (**obligatoire au premier
+démarrage**, voir § Base vectorielle) :
+
+```bash
+docker compose exec backend uv run python -m app.scripts.ingest
+```
+
+| Service | URL |
+|---------|-----|
+| Interface Angular | http://localhost:4200 |
+| API FastAPI | http://localhost:8000 |
+| Documentation interactive (Swagger) | http://localhost:8000/docs |
+
+Arrêter les services (`-v` supprime en plus les volumes de données) :
+
+```bash
+docker compose down
+```
+
+### Vérification bout en bout
+
+```bash
+# 1. Le backend répond
+curl http://localhost:8000/api/v1/healthcheck
+# -> {"status":"ok"}
+
+# 2. L'interface est servie
+curl -I http://localhost:4200
+# -> HTTP/1.1 200 OK
+
+# 3. L'agent agrège bien ses sources sur la position de départ
+curl "http://localhost:8000/api/v1/analyze?fen=rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR%20w%20KQkq%20-%200%201"
+```
+
+Le champ `sources` de la réponse indique l'état de chacune des cinq sources
+(`lichess`, `stockfish`, `milvus`, `youtube`, `mongo`) : c'est le moyen le plus
+rapide de repérer une clé d'API manquante ou un service non démarré.
+
+### Persistance des données
+
+Quatre volumes nommés conservent les données entre deux redémarrages :
+
+```bash
+docker volume ls | grep echecs   # mongo_data, milvus_data, etcd_data, minio_data, hf_cache
+```
+
+Pour vérifier que la persistance fonctionne, recréez les conteneurs sans
+supprimer les volumes — l'historique des analyses et l'index Milvus sont
+toujours là :
+
+```bash
+docker compose down && docker compose up -d
+docker compose exec mongo mongosh ffe_chess --quiet --eval "db.analyses.countDocuments()"
+curl "http://localhost:8000/api/v1/vector-search?query=sicilienne&top_k=1"
+```
 
 ## Endpoints de l'API
 
@@ -119,6 +194,38 @@ docker compose exec mongo mongosh ffe_chess --quiet --eval "db.analyses.find().s
 docker compose exec mongo mongosh ffe_chess --quiet --eval "db.api_cache.countDocuments()"
 ```
 
+## Positions de démonstration
+
+Ces positions se jouent directement sur l'échiquier de l'interface (les coups
+sont indiqués) ou s'interrogent en ligne de commande via `/analyze`. Elles
+couvrent les deux chemins du graphe de l'agent.
+
+| Position | Coups à jouer | Ce qu'elle démontre |
+|----------|---------------|---------------------|
+| Position de départ | — | Théorie très fournie : les coups les plus joués par les maîtres |
+| Défense sicilienne | 1.e4 c5 | Ouverture reconnue → contexte Wikichess + vidéos explicatives |
+| Partie italienne | 1.e4 e5 2.Cf3 Cc6 3.Fc4 | Ouverture classique enseignée aux jeunes joueurs |
+| Gambit dame | 1.d4 d5 2.c4 | Ouverture fermée, contraste avec les ouvertures ouvertes |
+| Hors théorie | 1.f3 e5 2.g4 | Position quittant les sentiers battus → bascule sur Stockfish, qui annonce la sanction (mat par 2…Dh4#) |
+
+FEN correspondantes, pour un appel direct à l'API :
+
+```bash
+BASE="http://localhost:8000/api/v1/analyze"
+
+# Défense sicilienne (1.e4 c5)
+curl -G "$BASE" --data-urlencode "fen=rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+
+# Partie italienne (1.e4 e5 2.Cf3 Cc6 3.Fc4)
+curl -G "$BASE" --data-urlencode "fen=r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3"
+
+# Gambit dame (1.d4 d5 2.c4)
+curl -G "$BASE" --data-urlencode "fen=rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2"
+
+# Hors théorie (1.f3 e5 2.g4)
+curl -G "$BASE" --data-urlencode "fen=rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2"
+```
+
 ## Tests
 
 ```bash
@@ -157,5 +264,5 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 - [x] **Étape 3** – RAG Wikichess → Milvus (recherche vectorielle) orchestré par LangGraph
 - [x] **Étape 4** – Recherche de vidéos YouTube (API Data v3) orchestrée par LangGraph
 - [x] **Étape 5** – Interface Angular (ngx-chess-board) + agent d'orchestration (`/analyze`)
-- [ ] **Étape 6** – Containerisation complète + démonstration
+- [x] **Étape 6** – Containerisation complète (6 services, volumes persistants) + démonstration
 - [ ] **Étape 7** – Note système d'analyse vidéo (MCP) : bénéfices, limites, faisabilité

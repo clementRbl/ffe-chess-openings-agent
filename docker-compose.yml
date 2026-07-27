@@ -13,6 +13,7 @@ services:
       MILVUS_PORT: 19530
       MONGO_HOST: mongo
       MONGO_PORT: 27017
+      MONGO_DATABASE: ${MONGO_DATABASE:-ffe_chess}
       HF_HOME: /cache/huggingface
     volumes:
       - hf_cache:/cache/huggingface
@@ -21,6 +22,16 @@ services:
         condition: service_healthy
       mongo:
         condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - /app/.venv/bin/python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/healthcheck')"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   frontend:
@@ -29,7 +40,8 @@ services:
     ports:
       - "${FRONTEND_PORT:-4200}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
 
   mongo:

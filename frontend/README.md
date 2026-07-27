@@ -1,27 +1,30 @@
-# Frontend
+# Interface Angular — agent ouvertures FFE
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.17.
+Interface du POC : un échiquier interactif dont chaque coup joué déclenche
+l'analyse de la position par l'agent, et un panneau affichant ses
+recommandations (coups théoriques, évaluation moteur, contexte d'ouverture,
+vidéos explicatives).
 
-## Development server
+Le mode d'emploi complet du projet (démarrage via Docker Compose, configuration,
+positions de démonstration) se trouve dans le [README racine](../README.md).
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Organisation
 
-## Code scaffolding
+| Dossier | Contenu |
+|---------|---------|
+| `src/app/` | Composant racine (échiquier + panneau) et service d'appel à l'API |
+| `projects/ngx-chess-board/` | Librairie de l'échiquier, intégrée en source locale (voir README racine) |
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Développement hors Docker
 
-## Build
+Le backend doit tourner par ailleurs (`docker compose up -d backend`).
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+npm install
+npm run build ngx-chess-board   # compiler la librairie de l'échiquier d'abord
+npm start                       # http://localhost:4200
+```
 
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+> En développement, `ng serve` sert l'application sur le port 4200 mais ne
+> reproduit pas le proxy nginx utilisé en conteneur : les appels à `/api` doivent
+> être redirigés vers `http://localhost:8000` (option `--proxy-config`).
