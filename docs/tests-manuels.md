@@ -518,10 +518,11 @@ docker volume ls | grep echecs
 cd backend && uv run pytest
 ```
 
-**Attendu :** 47 tests passent. Ils s'exécutent sans réseau ni service externe
+**Attendu :** 53 tests passent. Ils s'exécutent sans réseau ni service externe
 (toutes les dépendances sont remplacées par des doublures) et couvrent la
 validation FEN, l'aiguillage du graphe, la dégradation gracieuse, le cache, la
-sélection des extraits documentaires et le contrat HTTP.
+sélection des extraits documentaires, la reconnexion à Milvus et le contrat
+HTTP.
 
 ### Test 28 — Suite de tests du frontend
 
@@ -576,8 +577,28 @@ docker compose start milvus
 **Attendu :** `context` est vide et `sources.milvus` passe à `"ok": false`, mais
 les coups théoriques, l'évaluation et les vidéos sont bien là.
 
-> Après redémarrage, laisser à Milvus jusqu'à 90 secondes pour redevenir
-> `healthy` avant de rejouer un test.
+Puis, **une fois Milvus redevenu `healthy`** (jusqu'à 90 secondes), rejouer la
+même requête **sans redémarrer le backend** :
+
+```bash
+curl "http://localhost:8000/api/v1/vector-search?query=defense%20sicilienne&top_k=1"
+```
+
+**Attendu :** la recherche fonctionne de nouveau et `sources.milvus` repasse à
+`"ok": true`. Vérifier au passage que le backend n'a pas redémarré :
+
+```bash
+docker inspect ffe-chess-backend --format 'RestartCount={{.RestartCount}}'
+```
+
+**Attendu :** `RestartCount=0`.
+
+> **Pourquoi ce contrôle.** Le client `pymilvus` mutualise ses canaux gRPC dans
+> un registre interne. Après une panne, ce registre pouvait resservir
+> indéfiniment un canal fermé : la recherche documentaire restait cassée jusqu'au
+> redémarrage du backend, alors que Milvus était déclaré sain. Le dépôt demande
+> désormais une connexion dédiée, hors de ce registre, et retente une fois après
+> reconnexion.
 
 ### 8.3 Test 32 — Clés d'API absentes
 
