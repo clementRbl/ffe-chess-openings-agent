@@ -518,10 +518,10 @@ docker volume ls | grep echecs
 cd backend && uv run pytest
 ```
 
-**Attendu :** 29 tests passent. Ils s'exécutent sans réseau ni service externe
+**Attendu :** 47 tests passent. Ils s'exécutent sans réseau ni service externe
 (toutes les dépendances sont remplacées par des doublures) et couvrent la
-validation FEN, l'aiguillage du graphe, la dégradation gracieuse, le cache et le
-contrat HTTP.
+validation FEN, l'aiguillage du graphe, la dégradation gracieuse, le cache, la
+sélection des extraits documentaires et le contrat HTTP.
 
 ### Test 28 — Suite de tests du frontend
 
@@ -529,9 +529,10 @@ contrat HTTP.
 cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
 ```
 
-**Attendu :** 10 tests passent. Ils couvrent le lecteur vidéo (ouverture à la
-demande, stabilité de l'URL d'intégration, fermeture) et la mise en forme de
-l'évaluation du moteur.
+**Attendu :** 46 tests passent. Ils couvrent le lecteur vidéo (ouverture à la
+demande, stabilité de l'URL d'intégration, fermeture), les flèches de
+recommandation sur l'échiquier, la lisibilité de l'évaluation et l'annulation
+d'un coup.
 
 ### Test 29 — Qualité du code
 
@@ -539,7 +540,7 @@ l'évaluation du moteur.
 cd backend && uv run ruff check . && uv run ruff format --check app tests
 ```
 
-**Attendu :** `All checks passed!` puis `38 files already formatted`.
+**Attendu :** `All checks passed!` puis `41 files already formatted`.
 
 ---
 
