@@ -22,6 +22,9 @@ frontend/.angular/
 # Docker volumes (named volumes are managed by Docker, not stored in-repo)
 volumes/
 
+# Notes de travail personnelles (hors livrables)
+notes-perso/
+
 # IDE / OS
 .idea/
 .vscode/
