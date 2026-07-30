@@ -15,12 +15,12 @@ export class TourService {
     {
       element: '.board-card',
       popover: {
-        title: 'Ton échiquier',
+        title: 'Votre échiquier',
         description:
-          "Joue un coup en déplaçant une pièce. À chaque coup, l'assistant analyse " +
+          "Jouez un coup en déplaçant une pièce. À chaque coup, l'assistant analyse " +
           'la nouvelle position et met à jour ses conseils, à droite. La pastille ' +
-          'sous le plateau rappelle à qui est le tour de jouer, et « Annuler le ' +
-          'coup » revient en arrière autant de fois que tu veux.',
+          'sous le plateau rappelle à qui est le tour de jouer, et « Annuler » ' +
+          'revient en arrière autant de fois que vous le souhaitez.',
       },
     },
     {
@@ -31,18 +31,19 @@ export class TourService {
           'Les traits en pointillé partent de la pièce à déplacer et filent vers sa ' +
           'case d\'arrivée. Les pastilles vertes 1, 2 et 3 sont les coups les plus ' +
           'joués par les maîtres, dans cet ordre ; l\'étoile orange est le choix du ' +
-          'moteur. Survole un coup dans la liste de droite pour isoler sa flèche, ou ' +
-          'coupe l\'affichage avec le bouton « Flèches ».',
+          'moteur. Survolez un coup dans la liste de droite pour isoler sa flèche, ou ' +
+          'coupez l\'affichage avec le bouton « Flèches ».',
       },
     },
     {
       element: '[data-tour="verdict"]',
       popover: {
-        title: 'Es-tu dans la théorie ?',
+        title: 'Êtes-vous dans la théorie ?',
         description:
-          "« Dans la théorie » signifie que ta position est connue et étudiée : des " +
-          'milliers de joueurs sont déjà passés par là. « Hors théorie », tu sors des ' +
-          "sentiers battus — ce n'est pas forcément mauvais, mais tu es livré à toi-même.",
+          "« Dans la théorie » signifie que la position est connue et étudiée : des " +
+          'milliers de joueurs sont déjà passés par là. « Hors théorie », vous sortez ' +
+          "des sentiers battus — ce n'est pas forcément mauvais, mais vous êtes livré " +
+          'à vous-même.',
       },
     },
     {
@@ -64,7 +65,7 @@ export class TourService {
         title: 'Ce que jouent les maîtres',
         description:
           'Les coups les plus fréquents dans les parties de haut niveau à partir de ' +
-          'ta position, avec le nombre de parties où ils ont été joués. Plus le ' +
+          'cette position, avec le nombre de parties où ils ont été joués. Plus le ' +
           "nombre est élevé, plus le coup est éprouvé.",
       },
     },
@@ -73,8 +74,8 @@ export class TourService {
       popover: {
         title: "Comprendre l'ouverture",
         description:
-          "Des explications rédigées sur l'ouverture que tu es en train de jouer : " +
-          'son idée directrice, ses plans typiques. C\'est le « pourquoi » derrière les coups.',
+          "Des explications rédigées sur l'ouverture en cours de jeu : son idée " +
+          'directrice, ses plans typiques. C\'est le « pourquoi » derrière les coups.',
       },
     },
     {
@@ -82,10 +83,10 @@ export class TourService {
       popover: {
         title: 'Des vidéos pour aller plus loin',
         description:
-          'Clique sur une vignette pour lancer la vidéo dans la page — rien ne se ' +
-          "charge tant que tu ne l'as pas demandé. Attention : ces vidéos " +
+          'Cliquez sur une vignette pour lancer la vidéo dans la page — rien ne se ' +
+          "charge tant qu'elle n'a pas été demandée. Attention : ces vidéos " +
           "présentent l'ouverture dans son ensemble, elles ne commentent pas le " +
-          'coup que tu viens de jouer.',
+          'dernier coup joué.',
       },
     },
     {
@@ -93,16 +94,16 @@ export class TourService {
       popover: {
         title: 'Sous le capot',
         description:
-          'Pour les curieux : la notation FEN de ta position et l\'état des services ' +
-          "interrogés par l'assistant. Tu peux ignorer cette section sans problème.",
+          'Pour les curieux : la notation FEN de la position et l\'état des services ' +
+          "interrogés par l'assistant. Cette section peut être ignorée sans problème.",
       },
     },
     {
       element: '[data-tour="replay"]',
       popover: {
-        title: 'À toi de jouer',
+        title: 'À vous de jouer',
         description:
-          'Tu peux relancer cette visite à tout moment depuis ce bouton. Bonne partie !',
+          'Cette visite peut être relancée à tout moment depuis ce bouton. Bonne partie !',
       },
     },
   ];

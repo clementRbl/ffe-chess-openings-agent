@@ -152,7 +152,7 @@
           @if (analysis.opening) {
             {{ analysis.opening }}
           } @else if (isStartPosition) {
-            À toi d'ouvrir
+            À vous d'ouvrir
           } @else {
             Ouverture non identifiée
           }
@@ -162,8 +162,8 @@
 
         @if (!analysis.opening && isStartPosition) {
           <p class="summary next">
-            Une ouverture porte un nom dès le premier coup. Joue-le, et cet
-            écran te donnera son nom, ses idées et des vidéos pour l'apprendre.
+            Une ouverture porte un nom dès le premier coup. Jouez-le, et cet
+            écran donnera son nom, ses idées et des vidéos pour l'apprendre.
           </p>
         }
       </div>
@@ -222,7 +222,7 @@
             Ce que jouent les maîtres
             <span
               class="hint"
-              data-tip="Les coups les plus fréquents dans les parties de haut niveau depuis ta position. La lettre désigne la pièce (C cavalier, F fou, T tour, D dame, R roi) ; sans lettre, c'est un pion."
+              data-tip="Les coups les plus fréquents dans les parties de haut niveau depuis cette position. La lettre désigne la pièce (C cavalier, F fou, T tour, D dame, R roi) ; sans lettre, c'est un pion."
               >?</span
             >
             <span class="source-tag">base Lichess</span>
@@ -244,8 +244,8 @@
             </ol>
           } @else {
             <p class="muted">
-              Aucun coup de référence ici : tu es sorti de la théorie connue.
-              Appuie-toi sur l'évaluation du moteur.
+              Aucun coup de référence ici : la position sort de la théorie
+              connue. Appuyez-vous sur l'évaluation du moteur.
             </p>
           }
         </article>
@@ -287,7 +287,7 @@
             }
             <span
               class="hint"
-              data-tip="Ces vidéos sont recherchées à partir du nom de l'ouverture. Elles la présentent dans son ensemble et ne pointent pas le coup que tu viens de jouer."
+              data-tip="Ces vidéos sont recherchées à partir du nom de l'ouverture. Elles la présentent dans son ensemble et ne pointent pas le dernier coup joué."
               >?</span
             >
             <span class="source-tag">YouTube</span>
@@ -318,8 +318,8 @@
             </div>
           } @else {
             <p class="muted">
-              Choisis une vidéo pour la regarder ici — rien ne se charge avant
-              ton clic.
+              Choisissez une vidéo pour la regarder ici — rien ne se charge
+              avant ce clic.
             </p>
           }
 
@@ -367,7 +367,7 @@
         @if (technicalOpen) {
           <div class="technical-body">
             <p class="explain">
-              La <strong>notation FEN</strong> est la « photo » de ta position :
+              La <strong>notation FEN</strong> est la « photo » de la position :
               une ligne de texte qui décrit où se trouve chaque pièce, à qui est
               le trait et quels roques restent possibles. C'est le langage
               compris par les moteurs et les bases de parties.

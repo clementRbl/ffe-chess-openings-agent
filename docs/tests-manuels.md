@@ -392,8 +392,8 @@ une explication de son ouverture.
 **Attendu avant tout clic :** le titre de la carte reprend le nom de l'ouverture
 (« Vidéos sur Sicilian Defense ») et précise que ces vidéos portent sur
 l'ouverture entière et non sur le coup joué. Aucune vidéo n'est lancée, seules
-cinq vignettes sont proposées sous la mention « Choisis une vidéo pour la
-regarder ici — rien ne se charge avant ton clic ».
+cinq vignettes sont proposées sous la mention « Choisissez une vidéo pour la
+regarder ici — rien ne se charge avant ce clic ».
 
 Cliquer sur une vignette.
 
