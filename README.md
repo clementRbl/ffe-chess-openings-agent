@@ -27,7 +27,7 @@ Le tout est orchestré par un agent **LangGraph** et exposé via une API
 ├── backend/                # API FastAPI + agent (Python)
 │   ├── app/
 │   │   ├── api/v1/         # Routes HTTP (versionnées : /api/v1)
-│   │   ├── core/           # Configuration (variables d'environnement)
+│   │   ├── core/           # Configuration, logging JSON, traçage MLflow
 │   │   ├── graph/          # Workflows LangGraph (agent, RAG, vidéos)
 │   │   ├── schemas/        # Modèles Pydantic des réponses
 │   │   ├── scripts/        # Ingestion du corpus dans Milvus
@@ -38,7 +38,8 @@ Le tout est orchestré par un agent **LangGraph** et exposé via une API
 ├── frontend/               # Interface Angular (échiquier + panneau agent)
 │   ├── src/app/            # Composant racine, services (API, visite guidée)
 │   └── projects/           # Librairie ngx-chess-board (source locale, cf. note)
-├── docs/                   # Livrables documentaires (note MCP, procédure de test)
+├── docs/                   # Livrables documentaires (architecture, sécurité, note MCP, tests)
+├── .github/workflows/      # CI (lint, tests, build Docker)
 ├── docker-compose.yml      # Orchestration de tous les services
 ├── .env.example            # Modèle de configuration
 └── CONSIGNES.md            # Document de référence de la mission
@@ -75,7 +76,7 @@ Le premier démarrage construit les images (backend Python + Stockfish, frontend
 Angular compilé puis servi par nginx) et télécharge les images de MongoDB,
 Milvus, etcd et MinIO : comptez une dizaine de minutes selon la connexion.
 
-Vérifier que les six services tournent et sont sains :
+Vérifier que les sept services tournent et sont sains :
 
 ```bash
 docker compose ps
@@ -93,6 +94,7 @@ docker compose exec backend uv run python -m app.scripts.ingest
 | Interface Angular | http://localhost:4200 |
 | API FastAPI | http://localhost:8000 |
 | Documentation interactive (Swagger) | http://localhost:8000/docs |
+| MLflow (traces de l'agent) | http://localhost:5000 |
 
 Arrêter les services (`-v` supprime en plus les volumes de données) :
 
@@ -134,11 +136,12 @@ démarré.
 
 ### Persistance des données
 
-Cinq volumes nommés conservent les données entre deux redémarrages (données
-MongoDB et Milvus, métadonnées etcd et MinIO, cache du modèle d'embedding) :
+Six volumes nommés conservent les données entre deux redémarrages (données
+MongoDB et Milvus, métadonnées etcd et MinIO, cache du modèle d'embedding,
+traces MLflow) :
 
 ```bash
-docker volume ls | grep echecs   # mongo_data, milvus_data, etcd_data, minio_data, hf_cache
+docker volume ls | grep echecs   # mongo_data, milvus_data, etcd_data, minio_data, hf_cache, mlflow_data
 ```
 
 Pour vérifier que la persistance fonctionne, recréez les conteneurs sans
@@ -189,6 +192,7 @@ expliqué plutôt qu'affiché brut.
 | `GET` | `/api/v1/vector-search?query=...` | Passages Wikichess pertinents sur une ouverture (RAG Milvus via LangGraph) |
 | `GET` | `/api/v1/videos/{opening}` | Vidéos YouTube explicatives sur une ouverture (via LangGraph) |
 | `GET` | `/api/v1/analyze?fen=...` | **Analyse complète de l'agent** : agrège coups, éval, contexte et vidéos (LangGraph, choix conditionnel de la source) |
+| `GET` | `/metrics` | Métriques Prometheus (hors `/api/v1`, voir § Observabilité) |
 
 > Le paramètre `{fen}` contient des `/` et des espaces : les espaces doivent être
 > encodés (`%20`). Exemple pour la position de départ :
@@ -236,6 +240,17 @@ docker compose exec mongo mongosh ffe_chess --quiet --eval "db.analyses.find().s
 docker compose exec mongo mongosh ffe_chess --quiet --eval "db.api_cache.countDocuments()"
 ```
 
+## Observabilité
+
+Trois outils, chacun optionnel — leur absence ne casse jamais l'agent (détails
+et justification dans [docs/architecture.md § Observabilité](docs/architecture.md#5-observabilité)) :
+
+| Outil | Où | Ce qu'il montre |
+|-------|----|----|
+| Logs JSON structurés | `docker compose logs backend` | Une ligne par requête HTTP et par nœud du graphe exécuté (durée, succès/échec) |
+| Métriques Prometheus | http://localhost:8000/metrics | Requêtes HTTP par route/code, latences |
+| Traces MLflow (best effort) | http://localhost:5000 | Une trace par appel à `/analyze`, avec un span par nœud (Lichess, Stockfish, Milvus, YouTube, Mongo) |
+
 ## Positions de démonstration
 
 Ces positions se jouent directement sur l'échiquier de l'interface (les coups
@@ -277,6 +292,25 @@ cd backend && uv run pytest
 Les tests s'exécutent sans aucun service externe : Lichess, Stockfish, Milvus,
 YouTube et MongoDB sont remplacés par des doublures.
 
+### CI et vérifications avant push
+
+`.github/workflows/ci.yml` exécute lint + tests + build d'image, en parallèle
+et uniquement pour la partie modifiée (backend/frontend), à chaque push/PR sur
+`main` — détail dans
+[docs/architecture.md § CI/CD](docs/architecture.md#6-cicd).
+
+Pour avoir le même retour **avant même de pousser**, activer une fois par
+clone le hook de pre-push versionné dans `.githooks/` :
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Un `git push` lance alors localement, seulement sur ce qui a changé, les
+mêmes vérifications que la CI (ruff, pytest, tests Angular) — et bloque le
+push en cas d'échec. Contournement ponctuel (déconseillé) : `git push
+--no-verify`.
+
 ## Configuration
 
 Toute la configuration passe par des **variables d'environnement** (fichier
@@ -286,9 +320,11 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 |-----------------|---------------------------------------------------------|--------|
 | `BACKEND_PORT`    | Port exposé par l'API FastAPI                          | `8000` |
 | `FRONTEND_PORT`   | Port exposé par l'interface Angular (nginx)            | `4200` |
+| `MLFLOW_PORT`     | Port exposé par l'UI MLflow (traces de l'agent)        | `5000` |
 | `LICHESS_TOKEN`   | Token personnel Lichess pour l'opening explorer (requis pour `/moves`) | *(vide)* |
 | `YOUTUBE_API_KEY` | Clé API YouTube Data v3 (requise pour `/videos`)       | *(vide)* |
 | `MONGO_DATABASE`  | Nom de la base MongoDB (cache + historique)            | `ffe_chess` |
+| `LOG_LEVEL`       | Niveau des logs JSON du backend                        | `INFO` |
 
 > **Token Lichess :** l'opening explorer requiert désormais une authentification.
 > Générez un token gratuit (sans scope) sur
@@ -303,8 +339,10 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 
 | Document | Objet |
 |----------|-------|
+| [docs/architecture.md](docs/architecture.md) | Fonctionnement technique de l'agent : couches, graphe LangGraph, dégradation gracieuse, observabilité (logs, métriques, MLflow), CI/CD |
+| [docs/securite.md](docs/securite.md) | Modèle de sécurité : secrets, validation des entrées, surface réseau, limites assumées d'un POC local |
 | [docs/note-analyse-video-mcp.md](docs/note-analyse-video-mcp.md) | Note sur le système avancé d'analyse vidéo : bénéfices, limites, architecture MCP, étude de faisabilité (coûts build + opex), alternatives et roadmap |
-| [docs/tests-manuels.md](docs/tests-manuels.md) | Procédure de test manuel de bout en bout : 29 tests couvrant les services, l'API, l'interface, la persistance et la résistance aux pannes |
+| [docs/tests-manuels.md](docs/tests-manuels.md) | Procédure de test manuel de bout en bout : 32 tests couvrant les services, l'API, l'interface, la persistance et la résistance aux pannes |
 
 ## Avancement (étapes de la mission)
 
@@ -313,5 +351,5 @@ Toute la configuration passe par des **variables d'environnement** (fichier
 - [x] **Étape 3** – RAG Wikichess → Milvus (recherche vectorielle) orchestré par LangGraph
 - [x] **Étape 4** – Recherche de vidéos YouTube (API Data v3) orchestrée par LangGraph
 - [x] **Étape 5** – Interface Angular (ngx-chess-board) + agent d'orchestration (`/analyze`)
-- [x] **Étape 6** – Containerisation complète (6 services, volumes persistants) + démonstration
+- [x] **Étape 6** – Containerisation complète (7 services, volumes persistants) + démonstration
 - [x] **Étape 7** – Note système d'analyse vidéo (MCP) : bénéfices, limites, faisabilité
