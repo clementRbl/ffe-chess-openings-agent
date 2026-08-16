@@ -1,0 +1,157 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Un nouveau push sur une PR annule le run précédent : évite de payer deux
+# fois le coût d'installation (torch, sentence-transformers) sur des commits
+# devenus obsolètes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Détecte ce qui a réellement changé pour éviter de payer l'installation de
+  # torch/sentence-transformers (~1-2 min, même caché) quand une PR ne touche
+  # que le frontend ou la documentation, et inversement pour Angular.
+  changes:
+    name: Detect changed areas
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/ci.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/ci.yml'
+
+  # Les quatre jobs ci-dessous démarrent tous en parallèle dès que `changes`
+  # répond (pas de chaîne `needs` entre lint/tests et build d'image) : le
+  # temps total du pipeline est la durée du plus long job, pas leur somme.
+
+  backend-lint-test:
+    name: Backend (lint + tests)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          # Cache clé sur uv.lock, à l'intérieur du dossier backend : tant que
+          # les dépendances ne changent pas, torch (roues CPU) et
+          # sentence-transformers ne sont pas retéléchargés à chaque run —
+          # c'est l'essentiel du temps d'installation du backend.
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: uv sync --frozen
+
+      - name: Lint (ruff)
+        working-directory: backend
+        run: |
+          uv run ruff check .
+          uv run ruff format --check app tests
+
+      - name: Tests (pytest)
+        working-directory: backend
+        run: uv run pytest -q
+
+  frontend-lint-test:
+    name: Frontend (tests)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Tests (Angular, Chrome headless)
+        working-directory: frontend
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+
+  backend-image:
+    name: Build backend image
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      # Le cache GitHub Actions de Buildx conserve les couches d'image entre
+      # deux runs : si pyproject.toml/uv.lock n'ont pas changé, la couche
+      # d'installation des dépendances (torch compris) est réutilisée telle
+      # quelle plutôt que rejouée.
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: false
+          tags: ffe-chess-backend:ci
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+  frontend-image:
+    name: Build frontend image
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: false
+          tags: ffe-chess-frontend:ci
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  # Un point d'entrée unique et stable à mettre en check requis obligatoire
+  # dans les règles de protection de branche : les jobs ci-dessus étant
+  # conditionnels (`if:`), GitHub les affiche comme absents plutôt qu'échoués
+  # quand ils sont ignorés, ce qu'un check requis ne peut pas exprimer.
+  ci-status:
+    name: CI
+    needs: [changes, backend-lint-test, frontend-lint-test, backend-image, frontend-image]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check that no required job failed
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "Au moins un job a échoué."
+            exit 1
+          fi
