@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     backend_host: str = "0.0.0.0"
     backend_port: int = 8000
 
+    # Observabilité : niveau de log et suivi MLflow des exécutions du graphe.
+    log_level: str = "INFO"
+    mlflow_tracking_uri: str = ""
+    mlflow_experiment_name: str = "ffe-chess-agent"
+
     # Explorateur d'ouvertures Lichess (parties de maîtres / références).
     # Depuis 2025, l'explorateur exige une requête authentifiée : fournir un
     # token personnel Lichess gratuit (https://lichess.org/account/oauth/token).
@@ -68,6 +73,7 @@ class Settings(BaseSettings):
     youtube_api_key: str = ""
     youtube_max_results: int = 5
     youtube_search_keywords: str = "chess opening tutorial explanation"
+    youtube_timeout_seconds: float = 10.0
 
     @property
     def milvus_uri(self) -> str:
