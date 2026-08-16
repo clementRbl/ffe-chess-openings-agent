@@ -58,6 +58,37 @@ position :
   sur **chaque** position (`moves → evaluate` est une arête simple, pas
   conditionnelle) pour garantir qu'une évaluation est toujours disponible.
 
+### Comment une position est identifiée ou non
+
+Lichess ne reconnaît pas une ouverture en comparant les coups joués à un
+répertoire connu : `_moves` (`app/graph/agent_graph.py:116-146`) envoie la
+FEN **courante** à son explorateur de parties de maîtres, qui répond soit des
+coups déjà joués depuis **cette position exacte** avec son nom, soit une
+liste vide si aucune partie de sa base n'y est jamais passée. `in_theory`
+vaut `bool(response.moves)` : « identifiée » signifie littéralement « cette
+position existe dans la base », pas « ça ressemble à une ouverture connue ».
+
+Conséquence pour l'utilisateur : dès qu'un coup s'écarte de ce que jouent les
+maîtres, la position résultante n'a presque aucune chance d'avoir déjà été
+atteinte — et comme les échecs se ramifient combinatoirement, chaque position
+suivante en dépend entièrement. **Rester hors théorie après un premier coup
+surprenant est donc le comportement normal**, pas un défaut de détection ;
+seule une **transposition** (retomber par un autre enchaînement de coups sur
+une position connue) y ramène.
+
+Un même symptôme visuel (bandeau « hors théorie », cartes contexte/vidéos
+absentes) peut avoir deux causes très différentes, à distinguer via
+`sources.lichess` dans les « Détails techniques » de l'interface :
+
+| Cause | `sources.lichess` | Ce qui s'est passé |
+|-------|--------------------|--------------------|
+| Position hors de la base de maîtres (cas normal) | `{"ok": true}` | Lichess a répondu normalement, avec une liste vide — une vraie réponse, pas un échec |
+| Panne réelle (Lichess injoignable, token invalide, timeout) | `{"ok": false, "detail": "..."}` | `LichessError` capturée (voir § Dégradation gracieuse ci-dessous) ; `in_theory`/`theoretical_moves` prennent les mêmes valeurs par défaut que le cas normal |
+
+Dans les deux cas, Stockfish (`evaluate`) a de toute façon déjà tourné sur la
+position : la recommandation bascule sur son meilleur coup plutôt que de
+laisser l'utilisateur sans réponse.
+
 ### État partagé (`AgentState`)
 
 | Champ | Rempli par | Rôle |
