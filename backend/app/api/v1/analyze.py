@@ -10,7 +10,7 @@ contient des ``/`` et des espaces, plus simples à transmettre ainsi.
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.graph.agent_graph import agent_graph
+from app.graph.agent_graph import run_agent
 from app.schemas.agent import AgentAnalysis
 from app.services.fen import InvalidFenError, parse_fen
 
@@ -34,7 +34,7 @@ async def analyze(
     except InvalidFenError as exc:
         raise HTTPException(status_code=400, detail=f"Invalid FEN: {exc}") from exc
 
-    state = await agent_graph.ainvoke({"fen": fen, "sources": {}})
+    state = await run_agent(fen)
     return AgentAnalysis(
         fen=fen,
         opening=state.get("opening"),

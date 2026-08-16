@@ -18,8 +18,13 @@ Chaque nœud capture ses propres erreurs dans l'état (``sources``) afin que la
 panne d'un service n'interrompe pas toute l'analyse (dégradation gracieuse).
 """
 
+import functools
+import inspect
+import logging
+import time
 from typing import Annotated, TypedDict
 
+import mlflow
 from langgraph.graph import END, START, StateGraph
 from starlette.concurrency import run_in_threadpool
 
@@ -36,6 +41,57 @@ from app.services.mongo import MongoError, mongo_repository
 from app.services.notation import to_french_san
 from app.services.stockfish_engine import StockfishError, stockfish_service
 from app.services.youtube import YouTubeError, youtube_service
+
+logger = logging.getLogger("app.graph")
+
+
+def _traced(name: str):
+    """Journalise la durée/le résultat d'un nœud et l'ajoute à la trace MLflow.
+
+    Un seul point d'instrumentation pour les six nœuds, plutôt que de répéter
+    la mesure du temps et le log dans chacun : c'est un souci transverse
+    (observabilité), pas une règle métier propre à un nœud. Le span MLflow
+    n'est ajouté que si un serveur est configuré (``settings.mlflow_tracking_uri``) :
+    voir ``app/core/tracking.py`` pour le choix « best effort ».
+    """
+
+    def decorator(node):
+        if settings.mlflow_tracking_uri:
+            node = mlflow.trace(name=name, span_type="TOOL")(node)
+
+        def _emit(state: AgentState, update: dict, started_at: float) -> None:
+            source = (update.get("sources") or {}).get(name)
+            logger.info(
+                "graph_node",
+                extra={
+                    "node": name,
+                    "fen": state.get("fen"),
+                    "duration_ms": round((time.perf_counter() - started_at) * 1000, 1),
+                    "ok": source.ok if source else True,
+                },
+            )
+
+        if inspect.iscoroutinefunction(node):
+
+            @functools.wraps(node)
+            async def async_wrapper(state: AgentState) -> AgentState:
+                started_at = time.perf_counter()
+                update = await node(state)
+                _emit(state, update, started_at)
+                return update
+
+            return async_wrapper
+
+        @functools.wraps(node)
+        def sync_wrapper(state: AgentState) -> AgentState:
+            started_at = time.perf_counter()
+            update = node(state)
+            _emit(state, update, started_at)
+            return update
+
+        return sync_wrapper
+
+    return decorator
 
 
 def _merge_sources(current: dict, update: dict) -> dict:
@@ -220,12 +276,12 @@ def _route_after_evaluate(state: AgentState) -> str:
 def build_agent_graph():
     """Construit et compile le graphe d'orchestration de l'agent."""
     builder = StateGraph(AgentState)
-    builder.add_node("moves", _moves)
-    builder.add_node("evaluate", _evaluate)
-    builder.add_node("context", _context)
-    builder.add_node("videos", _videos)
-    builder.add_node("summarize", _summarize)
-    builder.add_node("persist", _persist)
+    builder.add_node("moves", _traced("moves")(_moves))
+    builder.add_node("evaluate", _traced("evaluate")(_evaluate))
+    builder.add_node("context", _traced("context")(_context))
+    builder.add_node("videos", _traced("videos")(_videos))
+    builder.add_node("summarize", _traced("summarize")(_summarize))
+    builder.add_node("persist", _traced("persist")(_persist))
 
     builder.add_edge(START, "moves")
     builder.add_edge("moves", "evaluate")
@@ -240,3 +296,18 @@ def build_agent_graph():
 
 
 agent_graph = build_agent_graph()
+
+
+async def _run_agent(fen: str) -> AgentState:
+    """Analyse une position : point d'entrée unique utilisé par ``/analyze``."""
+    return await agent_graph.ainvoke({"fen": fen, "sources": {}})
+
+
+# Trace parente englobant l'appel complet (les nœuds, tracés individuellement
+# par ``_traced``, apparaissent comme des spans enfants) — voir la même
+# condition que dans ``_traced`` : pas de trace si MLflow n'est pas configuré.
+run_agent = (
+    mlflow.trace(name="analyze")(_run_agent)
+    if settings.mlflow_tracking_uri
+    else _run_agent
+)

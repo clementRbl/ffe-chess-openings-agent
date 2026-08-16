@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Règles avant push : miroir local et rapide des jobs de .github/workflows/ci.yml,
+# pour échouer en quelques secondes plutôt que d'attendre la CI distante.
+#
+# Installation (une fois, par clone) :
+#   git config core.hooksPath .githooks
+#
+# Contournement ponctuel (déconseillé) :
+#   git push --no-verify
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+# Fichiers concernés par ce push : diff entre HEAD et sa base sur origin/main.
+# À défaut (première branche, origin/main inconnu localement), on retombe sur
+# les 20 derniers commits — une approximation suffisante pour un garde-fou
+# local, la CI reste la vérité de référence.
+base_ref="$(git merge-base HEAD origin/main 2>/dev/null || true)"
+if [[ -z "$base_ref" ]]; then
+  base_ref="$(git rev-parse HEAD~20 2>/dev/null || git rev-parse --root HEAD 2>/dev/null || echo "HEAD")"
+fi
+
+changed_files="$(git diff --name-only "$base_ref" HEAD || true)"
+
+status=0
+
+if echo "$changed_files" | grep -q '^backend/'; then
+  echo "==> backend modifié : ruff + pytest"
+  if ! command -v uv >/dev/null 2>&1; then
+    echo "!! uv introuvable (https://docs.astral.sh/uv/) : vérifications backend ignorées."
+  else
+    (cd backend && uv run ruff check .) || status=1
+    (cd backend && uv run ruff format --check app tests) || status=1
+    (cd backend && uv run pytest -q) || status=1
+  fi
+fi
+
+if echo "$changed_files" | grep -q '^frontend/'; then
+  echo "==> frontend modifié : tests Angular (Chrome headless)"
+  if ! command -v npx >/dev/null 2>&1; then
+    echo "!! npx introuvable (Node.js) : vérifications frontend ignorées."
+  else
+    (cd frontend && npx ng test --watch=false --browsers=ChromeHeadless) || status=1
+  fi
+fi
+
+if [[ $status -ne 0 ]]; then
+  echo
+  echo "Push bloqué : corrige les erreurs ci-dessus (ou 'git push --no-verify' pour forcer, déconseillé)."
+  exit 1
+fi
+
+exit 0

@@ -4,7 +4,7 @@ POC agent IA — apprentissage des ouvertures aux échecs (FFE)
 
 Ce document permet de vérifier, sans connaissance préalable du code, que
 l'ensemble du système fonctionne. Il se déroule en une trentaine de minutes
-(hors premier téléchargement des images) et couvre les six services, les six
+(hors premier téléchargement des images) et couvre les sept services, les six
 routes de l'API, l'interface, la persistance des données et le comportement du
 système en panne.
 
@@ -21,7 +21,7 @@ regroupées au § 9.
 | Docker | `docker --version` | version 24 ou supérieure |
 | Docker Compose v2 | `docker compose version` | version 2.x |
 | Espace disque | `df -h .` | au moins 8 Go libres |
-| Ports libres | `ss -tlnp \| grep -E ':(4200\|8000\|19530\|9091)'` | aucune ligne |
+| Ports libres | `ss -tlnp \| grep -E ':(4200\|8000\|19530\|9091\|5000)'` | aucune ligne |
 
 Deux clés sont nécessaires pour tester **toutes** les sources. Sans elles, le
 système fonctionne mais deux tests seront en échec attendu (§ 8.3).
@@ -50,7 +50,7 @@ docker compose up --build -d
 ```
 
 > Premier lancement : compter une dizaine de minutes (construction des images,
-> téléchargement de MongoDB, Milvus, etcd et MinIO).
+> téléchargement de MongoDB, Milvus, etcd, MinIO et MLflow).
 
 ### 2.3 Test 1 — Tous les services sont sains
 
@@ -58,7 +58,7 @@ docker compose up --build -d
 docker compose ps
 ```
 
-**Attendu :** six services, tous `Up`. Cinq portent la mention `(healthy)` ;
+**Attendu :** sept services, tous `Up`. Six portent la mention `(healthy)` ;
 `frontend` (nginx) n'a pas de sonde et affiche seulement `Up`.
 
 ```
@@ -67,6 +67,7 @@ etcd       Up X minutes (healthy)
 frontend   Up X minutes
 milvus     Up X minutes (healthy)
 minio      Up X minutes (healthy)
+mlflow     Up X minutes (healthy)
 mongo      Up X minutes (healthy)
 ```
 
@@ -85,8 +86,8 @@ docker compose exec backend uv run python -m app.scripts.ingest
 **Attendu :** deux lignes, la seconde confirmant l'insertion.
 
 ```
-Loaded 34 chunks from data/wikichess
-Inserted 34 chunks into 'wikichess_openings'
+Loaded 27 chunks from data/wikichess
+Inserted 27 chunks into 'wikichess_openings'
 ```
 
 > Le modèle d'embedding (~1,2 Go) est téléchargé au premier lancement : cette
@@ -518,11 +519,11 @@ docker volume ls | grep echecs
 cd backend && uv run pytest
 ```
 
-**Attendu :** 53 tests passent. Ils s'exécutent sans réseau ni service externe
+**Attendu :** 55 tests passent. Ils s'exécutent sans réseau ni service externe
 (toutes les dépendances sont remplacées par des doublures) et couvrent la
 validation FEN, l'aiguillage du graphe, la dégradation gracieuse, le cache, la
-sélection des extraits documentaires, la reconnexion à Milvus et le contrat
-HTTP.
+sélection des extraits documentaires, la reconnexion à Milvus, le chunking
+Wikichess (fusion/découpage) et le contrat HTTP.
 
 ### Test 28 — Suite de tests du frontend
 
@@ -541,7 +542,7 @@ d'un coup.
 cd backend && uv run ruff check . && uv run ruff format --check app tests
 ```
 
-**Attendu :** `All checks passed!` puis `41 files already formatted`.
+**Attendu :** `All checks passed!` puis `44 files already formatted`.
 
 ---
 
@@ -671,6 +672,10 @@ docker rm -f ffe-test-nokeys
 | L'interface reste vide | Backend non démarré | `docker compose ps`, puis `docker compose logs backend` |
 | Port déjà utilisé au démarrage | Conflit avec un autre service | Modifier `BACKEND_PORT` ou `FRONTEND_PORT` dans `.env` |
 | Seules 3 sources dans `analyze` | Position sans nom d'ouverture | Comportement normal, voir test 10 |
+| `http://localhost:5000` (MLflow) inaccessible | Le conteneur `mlflow` n'est pas encore sain, ou n'a pas démarré | `docker compose ps mlflow`, puis `docker compose logs mlflow` |
+| MLflow accessible mais aucune trace | `MLFLOW_TRACKING_URI` absent côté backend, ou backend démarré avant que MLflow réponde | Vérifier `docker compose logs backend \| grep mlflow_tracking` (voir § ci-dessous) ; **ce n'est jamais bloquant**, l'agent fonctionne normalement sans traçage (voir [architecture.md § Observabilité](architecture.md#5-observabilité)) |
+| `GET /metrics` renvoie 404 ou vide | Backend pas encore démarré, ou ancienne image sans l'instrumentation | `docker compose up -d --build backend` |
+| Le job `docker-build` échoue en CI | Cache GitHub Actions expiré ou `uv.lock`/`package-lock.json` modifié sans mise à jour cohérente | Relancer le workflow ; en dernier recours, vider le cache depuis l'onglet *Actions* du dépôt |
 
 Consulter les journaux d'un service :
 
@@ -678,6 +683,18 @@ Consulter les journaux d'un service :
 docker compose logs backend --tail 50
 docker compose logs -f backend      # en continu
 ```
+
+Les journaux du backend sont au format **JSON** (une ligne = un objet), voir
+[architecture.md § Observabilité](architecture.md#5-observabilité). Pour les
+lire confortablement :
+
+```bash
+docker compose logs backend --tail 100 | grep -o '{.*}' | jq .
+docker compose logs backend --tail 100 | grep -o '{.*}' | jq 'select(.logger == "app.graph")'   # uniquement les nœuds du graphe
+```
+
+Au démarrage, une ligne `mlflow_tracking_enabled` ou `mlflow_tracking_disabled`
+/ `mlflow_tracking_unavailable` indique si le traçage MLflow est actif.
 
 ---
 
