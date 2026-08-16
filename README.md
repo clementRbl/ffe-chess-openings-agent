@@ -133,6 +133,12 @@ démarré.
 > `sources`, puisqu'il n'y a pas de nom d'ouverture à rechercher. C'est le
 > comportement attendu de l'aiguillage du graphe. Utilisez donc une position
 > nommée (§ Positions de démonstration) pour vérifier les cinq sources.
+>
+> Ce cas (`opening` absent) est différent d'une vraie panne Lichess : les deux
+> se traduisent par le même `in_theory: false` côté utilisateur, mais seul
+> `sources.lichess.ok` permet de les distinguer. Détail et pourquoi une
+> position hors théorie le reste généralement jusqu'à la fin de la partie :
+> [docs/architecture.md § Comment une position est identifiée ou non](docs/architecture.md#comment-une-position-est-identifiée-ou-non).
 
 ### Persistance des données
 
@@ -263,7 +269,7 @@ couvrent les deux chemins du graphe de l'agent.
 | Défense sicilienne | 1.e4 c5 | Ouverture reconnue → contexte Wikichess + vidéos explicatives |
 | Partie italienne | 1.e4 e5 2.Cf3 Cc6 3.Fc4 | Ouverture classique enseignée aux jeunes joueurs |
 | Gambit dame | 1.d4 d5 2.c4 | Ouverture fermée, contraste avec les ouvertures ouvertes |
-| Hors théorie | 1.f3 e5 2.g4 | Position quittant les sentiers battus → bascule sur Stockfish, qui annonce la sanction (mat par 2…Dh4#) |
+| Hors théorie | 1.f3 e5 2.g4 | Position quittant les sentiers battus → bascule sur Stockfish, qui annonce la sanction (mat par 2…Dh4#). Tous les coups suivants resteront hors théorie eux aussi : c'est mécanique, pas un défaut (§ ci-dessus). |
 
 FEN correspondantes, pour un appel direct à l'API :
 
