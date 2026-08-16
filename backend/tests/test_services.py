@@ -181,8 +181,16 @@ def test_wikichess_articles_are_chunked_by_paragraph(tmp_path):
     """Le corpus est découpé en passages, le titre venant de l'en-tête markdown."""
     from app.scripts.ingest import load_chunks
 
+    first_paragraph = (
+        "Premier paragraphe suffisamment long pour dépasser à lui seul le "
+        "seuil minimal de fusion, sans avoir besoin du paragraphe suivant."
+    )
+    second_paragraph = (
+        "Second\nparagraphe, également assez long pour ne pas être fusionné "
+        "avec le premier ni avec un éventuel troisième paragraphe."
+    )
     (tmp_path / "sicilienne.md").write_text(
-        "# Défense sicilienne\n\nPremier paragraphe.\n\nSecond\nparagraphe.\n",
+        f"# Défense sicilienne\n\n{first_paragraph}\n\n{second_paragraph}\n",
         encoding="utf-8",
     )
 
@@ -191,4 +199,41 @@ def test_wikichess_articles_are_chunked_by_paragraph(tmp_path):
     assert len(chunks) == 2
     assert all(chunk["title"] == "Défense sicilienne" for chunk in chunks)
     # Les retours à la ligne internes sont normalisés en espaces simples.
-    assert chunks[1]["text"] == "Second paragraphe."
+    assert chunks[1]["text"] == " ".join(second_paragraph.split())
+
+
+def test_short_paragraphs_are_merged_with_the_next_chunk(tmp_path):
+    """Un paragraphe isolé trop court (ex. ligne ECO) est fusionné, pas gardé seul."""
+    from app.scripts.ingest import load_chunks
+
+    (tmp_path / "sicilienne.md").write_text(
+        "# Défense sicilienne\n\n"
+        "ECO : B20-B99.\n\n"
+        "Paragraphe suivant, cette fois assez détaillé pour former un passage utile.\n",
+        encoding="utf-8",
+    )
+
+    chunks = load_chunks(tmp_path)
+
+    assert len(chunks) == 1
+    assert chunks[0]["text"].startswith("ECO : B20-B99.")
+    assert "Paragraphe suivant" in chunks[0]["text"]
+
+
+def test_long_paragraphs_are_split_below_max_chars(tmp_path):
+    """Un paragraphe trop long est scindé sur des frontières de mots."""
+    from app.scripts.ingest import MAX_CHUNK_CHARS, load_chunks
+
+    long_paragraph = " ".join(f"mot{i}" for i in range(300))
+    (tmp_path / "sicilienne.md").write_text(
+        f"# Défense sicilienne\n\n{long_paragraph}\n",
+        encoding="utf-8",
+    )
+
+    chunks = load_chunks(tmp_path)
+
+    assert len(chunks) > 1
+    assert all(len(chunk["text"]) <= MAX_CHUNK_CHARS for chunk in chunks)
+    # Aucun mot n'est coupé au milieu : recoller les segments doit retrouver
+    # exactement les mots d'origine.
+    assert " ".join(chunk["text"] for chunk in chunks).split() == long_paragraph.split()

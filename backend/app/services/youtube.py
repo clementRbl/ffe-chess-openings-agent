@@ -8,6 +8,7 @@ de clé ainsi que les erreurs de quota.
 
 import html
 
+import httplib2
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
@@ -27,6 +28,7 @@ class YouTubeService:
         api_key: str | None = None,
         max_results: int | None = None,
         keywords: str | None = None,
+        timeout: float | None = None,
     ) -> None:
         """Initialise le client.
 
@@ -34,12 +36,14 @@ class YouTubeService:
             api_key: Clé API YouTube (par défaut celle de la configuration).
             max_results: Nombre maximal de vidéos (par défaut celui de la config).
             keywords: Mots-clés ajoutés à la requête (par défaut ceux de la config).
+            timeout: Délai d'attente en secondes (par défaut celui de la config).
         """
         self._api_key = api_key if api_key is not None else settings.youtube_api_key
         self._max_results = max_results or settings.youtube_max_results
         self._keywords = (
             keywords if keywords is not None else settings.youtube_search_keywords
         )
+        self._timeout = timeout or settings.youtube_timeout_seconds
 
     def build_query(self, opening: str) -> str:
         """Construit une requête ciblée en combinant l'ouverture et les mots-clés."""
@@ -56,8 +60,8 @@ class YouTubeService:
             trouvée).
 
         Raises:
-            YouTubeError: si la clé API est absente ou si l'API échoue (quota,
-                erreur réseau, etc.).
+            YouTubeError: si la clé API est absente, si le délai d'attente est
+                dépassé, ou si l'API échoue (quota, erreur réseau, etc.).
         """
         if not self._api_key:
             raise YouTubeError(
@@ -66,7 +70,16 @@ class YouTubeService:
 
         try:
             youtube = build(
-                "youtube", "v3", developerKey=self._api_key, cache_discovery=False
+                "youtube",
+                "v3",
+                developerKey=self._api_key,
+                cache_discovery=False,
+                # ``googleapiclient`` ne pose aucun délai par défaut : sans
+                # transport dédié, une YouTube API lente ou injoignable
+                # bloquerait la requête indéfiniment plutôt que de dégrader
+                # proprement l'analyse (cf. vigilance des étapes 2/4 des
+                # consignes : « gérer erreurs et timeouts des APIs externes »).
+                http=httplib2.Http(timeout=self._timeout),
             )
             response = (
                 youtube.search()
@@ -81,6 +94,10 @@ class YouTubeService:
             )
         except HttpError as exc:
             raise YouTubeError(f"YouTube API error: {exc}") from exc
+        except TimeoutError as exc:
+            raise YouTubeError("YouTube request timed out") from exc
+        except (httplib2.HttpLib2Error, OSError) as exc:
+            raise YouTubeError(f"YouTube request failed: {exc}") from exc
 
         return self._parse(response)
 
