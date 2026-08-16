@@ -94,6 +94,15 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # ngx-chess-board est vendorisée en source locale (le paquet npm publié
+      # ne suit pas la version d'Angular utilisée ici, voir README.md) : il
+      # faut la compiler avant l'app, comme le fait le Dockerfile, sinon
+      # `import ... from 'ngx-chess-board'` ne résout rien sur un checkout
+      # propre (aucun frontend/dist/ngx-chess-board pré-existant en CI).
+      - name: Build ngx-chess-board library
+        working-directory: frontend
+        run: npx ng build ngx-chess-board
+
       - name: Tests (Angular, Chrome headless)
         working-directory: frontend
         run: npx ng test --watch=false --browsers=ChromeHeadless
